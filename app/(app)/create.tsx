@@ -8,20 +8,22 @@ import {
 
 import { router } from "expo-router";
 
-import api from "../services/api";
+import { usePlacesStore } from "../../stores/placesStore";
 
-import StarRating from "../components/StarRating";
+import StarRating from "../../components/StarRating";
 
 import {
   showErrorToast,
   showSuccessToast,
-} from "../components/Toast";
+} from "../../components/Toast";
 
-import ScreenWrapper from "../components/ScreenWrapper";
-import ScreenHeader from "../components/ScreenHeader";
-import AppButton from "../components/AppButton";
+import ScreenWrapper from "../../components/ScreenWrapper";
+import ScreenHeader from "../../components/ScreenHeader";
+import AppButton from "../../components/AppButton";
 
 export default function CreatePlaceScreen() {
+  const createPlace = usePlacesStore((s) => s.createPlace);
+
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [rating, setRating] = useState(0);
@@ -72,27 +74,23 @@ export default function CreatePlaceScreen() {
 
       return;
     }
-    try {
-      await api.post("/restaurants", {
-        name,
-        address,
-        rating: Number(rating),
-        pros,
-        cons,
-        favorite_dishes: favoriteDishes,
-      });
+    const { error } = await createPlace({
+      name,
+      address,
+      rating: Number(rating),
+      pros,
+      cons,
+      favorite_dishes: favoriteDishes,
+    });
 
-      showSuccessToast("Success", "Place created!");
-
-      router.back();
-    } catch (error: any) {
-      showErrorToast(
-        "Error",
-        error?.response?.data?.message ||
-        error.message ||
-        "Unknown error"
-      );
+    if (error) {
+      showErrorToast("Error", error);
+      return;
     }
+
+    showSuccessToast("Success", "Place created!");
+
+    router.back();
   };
 
   return (

@@ -6,16 +6,21 @@ import {
 export default function ScreenHeader({
     title,
     subtitle,
+    right,
 }: any) {
     return (
-        <View className="mb-8">
-            <Text className="text-5xl font-black tracking-widest text-white">
-                {title}
-            </Text>
+        <View className="mb-8 flex-row items-start justify-between">
+            <View className="flex-1">
+                <Text className="text-5xl font-black tracking-widest text-white">
+                    {title}
+                </Text>
 
-            <Text className="mt-1 text-zinc-300">
-                {subtitle}
-            </Text>
+                <Text className="mt-1 text-zinc-300">
+                    {subtitle}
+                </Text>
+            </View>
+
+            {right ? <View className="ml-3 mt-2">{right}</View> : null}
         </View>
     );
 }

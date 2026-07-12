@@ -3,8 +3,8 @@ import {
   View,
 } from "react-native";
 
-import ScreenWrapper from "../components/ScreenWrapper";
-import ScreenHeader from "../components/ScreenHeader";
+import ScreenWrapper from "../../components/ScreenWrapper";
+import ScreenHeader from "../../components/ScreenHeader";
 
 export default function MemoriesScreen() {
   return (

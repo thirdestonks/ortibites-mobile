@@ -67,8 +67,24 @@ Instead of trying to become another generic food finder platform, OrtiBites is d
 
 ## Backend
 
-* Laravel API
-* MySQL
+* Supabase (Postgres + Auth + Row Level Security)
+
+### Environment setup
+
+Copy `.env.example` to `.env` and fill in your Supabase project values
+(Supabase dashboard → Settings → API):
+
+```
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-PUBLIC-KEY
+```
+
+The anon key is public by design — security is enforced by RLS. Restart the dev
+server with `pnpm start -c` after editing `.env`.
+
+Database setup lives in `docs/supabase/schema.sql` (table + RLS) and
+`docs/supabase/seed.sql` (sample data). New to Supabase/Expo? Read
+`docs/supabase-expo-crash-course.md`.
 
 ---
 

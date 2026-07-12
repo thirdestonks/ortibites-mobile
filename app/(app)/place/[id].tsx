@@ -8,27 +8,32 @@ import {
   View,
 } from "react-native";
 
-import api from "../../services/api";
+import { usePlacesStore } from "../../../stores/placesStore";
+import type { Place } from "../../../types/place";
 
-import PageLoader from "../../components/PageLoader";
+import PageLoader from "../../../components/PageLoader";
 
 import {
+  showErrorToast,
   showSuccessToast,
-} from "../../components/Toast";
+} from "../../../components/Toast";
 
-import ScreenWrapper from "../../components/ScreenWrapper";
-import ScreenHeader from "../../components/ScreenHeader";
-import AppButton from "../../components/AppButton";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import ScreenHeader from "../../../components/ScreenHeader";
+import AppButton from "../../../components/AppButton";
 
 export default function PlaceDetailsScreen() {
   const { id } = useLocalSearchParams();
 
-  const [place, setPlace] = useState<any>(null);
+  const fetchPlace = usePlacesStore((s) => s.fetchPlace);
+  const deletePlace = usePlacesStore((s) => s.deletePlace);
+
+  const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
-      fetchPlace();
+      loadPlace();
     }, [id])
   );
 
@@ -57,16 +62,10 @@ export default function PlaceDetailsScreen() {
     Number(place?.rating ?? 0)
   );
 
-  const fetchPlace = async () => {
-    try {
-      const response = await api.get(`/restaurants/${id}`);
-
-      setPlace(response.data.data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
+  const loadPlace = async () => {
+    const data = await fetchPlace(id as string);
+    setPlace(data);
+    setLoading(false);
   };
 
   const handleDelete = () => {
@@ -83,18 +82,16 @@ export default function PlaceDetailsScreen() {
           style: "destructive",
 
           onPress: async () => {
-            try {
-              await api.delete(`/restaurants/${id}`);
+            const { error } = await deletePlace(id as string);
 
-              showSuccessToast(
-                "Success",
-                "Place deleted"
-              );
-
-              router.replace("/");
-            } catch (error) {
-              console.log(error);
+            if (error) {
+              showErrorToast("Error", error);
+              return;
             }
+
+            showSuccessToast("Success", "Place deleted");
+
+            router.replace("/");
           },
         },
       ]

@@ -14,20 +14,24 @@ import {
     View,
 } from "react-native";
 
-import api from "../../services/api";
+import { usePlacesStore } from "../../../stores/placesStore";
 
 import {
+    showErrorToast,
     showSuccessToast,
-} from "../../components/Toast";
+} from "../../../components/Toast";
 
-import ScreenWrapper from "../../components/ScreenWrapper";
-import ScreenHeader from "../../components/ScreenHeader";
-import AppButton from "../../components/AppButton";
-import StarRating from "../../components/StarRating";
-import PageLoader from "../../components/PageLoader";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import ScreenHeader from "../../../components/ScreenHeader";
+import AppButton from "../../../components/AppButton";
+import StarRating from "../../../components/StarRating";
+import PageLoader from "../../../components/PageLoader";
 
 export default function EditPlaceScreen() {
     const { id } = useLocalSearchParams();
+
+    const fetchPlace = usePlacesStore((s) => s.fetchPlace);
+    const updatePlace = usePlacesStore((s) => s.updatePlace);
 
     const [name, setName] = useState("");
     const [rating, setRating] = useState(0);
@@ -39,15 +43,13 @@ export default function EditPlaceScreen() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchPlace();
+        loadPlace();
     }, []);
 
-    const fetchPlace = async () => {
-        try {
-            const response = await api.get(`/restaurants/${id}`);
+    const loadPlace = async () => {
+        const place = await fetchPlace(id as string);
 
-            const place = response.data.data;
-
+        if (place) {
             setName(place.name ?? "");
             setAddress(place.address ?? "");
             setRating(Number(place.rating) || 0);
@@ -55,41 +57,38 @@ export default function EditPlaceScreen() {
             setPros(place.pros?.join(", ") ?? "");
             setCons(place.cons?.join(", ") ?? "");
             setFavoriteDishes(place.favorite_dishes?.join(", ") ?? "");
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setLoading(false);
         }
+
+        setLoading(false);
     };
 
     const handleUpdate = async () => {
-        try {
-            await api.put(`/restaurants/${id}`, {
-                name,
-                address,
-                rating,
-                pros: pros
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                cons: cons
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                favorite_dishes: favoriteDishes
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-            });
-            showSuccessToast(
-                "Success",
-                "Place updated!"
-            );
+        const { error } = await updatePlace(id as string, {
+            name,
+            address,
+            rating,
+            pros: pros
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            cons: cons
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            favorite_dishes: favoriteDishes
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+        });
 
-            router.back();
-        } catch (error) {
-            console.log(error);
+        if (error) {
+            showErrorToast("Error", error);
+            return;
         }
+
+        showSuccessToast("Success", "Place updated!");
+
+        router.back();
     };
 
     if (loading) {
