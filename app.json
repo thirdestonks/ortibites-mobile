@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "ortibites-mobile",
+    "name": "ortibites",
     "slug": "ortibites-mobile",
+    "scheme": "ortibites",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,13 +22,28 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.thirdestonks.ortibitesmobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1089026b-545f-4c57-8258-085eeb989f46"
+      }
+    }
   }
 }

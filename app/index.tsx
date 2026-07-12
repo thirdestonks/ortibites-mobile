@@ -1,67 +1,65 @@
-import { useEffect, useState } from "react";
-import {
-  FlatList,
-  Text,
-  View,
-} from "react-native";
-
-import { router } from "expo-router";
-
-import api from "../services/api";
-
-import { Place } from "../types/place";
-
-import PlaceCard from "../components/PlaceCard";
-import PageLoader from "../components/PageLoader";
-
-import ScreenWrapper from "../components/ScreenWrapper";
-import ScreenHeader from "../components/ScreenHeader";
-import AppButton from "../components/AppButton";
+import { useEffect, useState } from 'react'
+import { FlatList, Text, View } from 'react-native'
+import { router, useFocusEffect } from 'expo-router'
+import api from '../services/api'
+import { Place } from '../types/place'
+import PlaceCard from '../components/PlaceCard'
+import PageLoader from '../components/PageLoader'
+import ScreenWrapper from '../components/ScreenWrapper'
+import ScreenHeader from '../components/ScreenHeader'
+import AppButton from '../components/AppButton'
+import EmptyState from '../components/EmptyState'
+import React from 'react'
 
 export default function HomeScreen() {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [places, setPlaces] = useState<Place[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchPlaces();
-  }, []);
+    fetchPlaces()
+  }, [])
 
   const fetchPlaces = async () => {
-    setLoading(true);
+    setLoading(true)
 
     try {
-      const response = await api.get("/restaurants");
+      const response = await api.get('/restaurants')
 
-      setPlaces(response.data || []);
-    } catch (error) {
-      console.log(error);
+      setPlaces(response.data || [])
+    } catch (error: any) {
+      setPlaces([])
+
+      alert(
+        JSON.stringify({
+          message: error?.message,
+          status: error?.response?.status,
+          data: error?.response?.data,
+          baseURL: api.defaults.baseURL,
+        }),
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  useFocusEffect(
+  React.useCallback(() => {
+    fetchPlaces();
+  }, [])
+);
 
   if (loading) {
-    return <PageLoader />;
+    return <PageLoader />
   }
 
   return (
     <ScreenWrapper>
-      <ScreenHeader
-        title="ORTIBITES"
-        subtitle="kain ano tara?? 🍜"
-      />
+      <ScreenHeader title="ORTIBITES" subtitle="kain ano tara?? 🍜" />
 
-      <AppButton
-        title="+ ADD PLACE"
-        onPress={() => router.push("/create")}
-      />
+      <AppButton title="+ ADD PLACE" onPress={() => router.push('/create')} />
 
       {places.length === 0 ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-zinc-400">
-            No places found.
-          </Text>
-        </View>
+        <EmptyState title="NO BITES YET" subtitle="Add your first food spot 🍜" />
       ) : (
         <FlatList
           data={places}
@@ -83,5 +81,5 @@ export default function HomeScreen() {
         />
       )}
     </ScreenWrapper>
-  );
+  )
 }

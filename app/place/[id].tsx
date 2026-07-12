@@ -1,8 +1,9 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useFocusEffect, router, useLocalSearchParams } from "expo-router";
 import {
   Alert,
+  Linking,
   Text,
   View,
 } from "react-native";
@@ -25,9 +26,36 @@ export default function PlaceDetailsScreen() {
   const [place, setPlace] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPlace();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPlace();
+    }, [id])
+  );
+
+  const getRatingMeta = (rating: number) => {
+    if (rating >= 4.5) {
+      return {
+        color: "text-green-400",
+        label: "🔥 This Fire",
+      };
+    }
+
+    if (rating >= 3) {
+      return {
+        color: "text-yellow-400",
+        label: "👍 oks na bai",
+      };
+    }
+
+    return {
+      color: "text-red-400",
+      label: "😬 kadiri boi",
+    };
+  };
+
+  const ratingMeta = getRatingMeta(
+    Number(place?.rating ?? 0)
+  );
 
   const fetchPlace = async () => {
     try {
@@ -73,6 +101,24 @@ export default function PlaceDetailsScreen() {
     );
   };
 
+  const mapsHref = place?.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${place.name} ${place.address}`
+    )}`
+    : null;
+
+  const openMaps = async () => {
+    if (!mapsHref) return;
+
+    const supported = await Linking.canOpenURL(mapsHref);
+
+    if (supported) {
+      await Linking.openURL(mapsHref);
+    } else {
+      Alert.alert("Error", "Cannot open maps.");
+    }
+  };
+
   if (loading) {
     return <PageLoader />;
   }
@@ -99,14 +145,42 @@ export default function PlaceDetailsScreen() {
       {/* MAIN CARD */}
       <View className="rounded-3xl border border-zinc-800 bg-zinc-950/90 p-5">
         {/* RATING */}
-        <View className="mb-8">
+        <View className="mb-6">
           <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
             Rating
           </Text>
 
-          <Text className="text-4xl font-black text-yellow-400">
-            ⭐ {place.rating}
+          <View className="flex-row items-center">
+            <Text
+              className={`text-4xl font-black ${ratingMeta.color}`}
+            >
+              ⭐ {place.rating}
+            </Text>
+
+            <View className="ml-4 rounded-full bg-zinc-900 px-3 py-2">
+              <Text
+                className={`text-sm font-bold ${ratingMeta.color}`}
+              >
+                {ratingMeta.label}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ADDRESS + MAPS */}
+        <View className="mb-8 flex-row items-center justify-between rounded-2xl bg-zinc-900 p-4">
+          <Text className="flex-1 text-base text-zinc-300">
+            📍 {place.address || "No address"}
           </Text>
+
+          {mapsHref && (
+            <Text
+              onPress={openMaps}
+              className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Maps ↗
+            </Text>
+          )}
         </View>
 
         {/* PROS */}

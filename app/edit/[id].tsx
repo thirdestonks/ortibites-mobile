@@ -31,6 +31,10 @@ export default function EditPlaceScreen() {
 
     const [name, setName] = useState("");
     const [rating, setRating] = useState(0);
+    const [address, setAddress] = useState("");
+    const [pros, setPros] = useState("");
+    const [cons, setCons] = useState("");
+    const [favoriteDishes, setFavoriteDishes] = useState("");
 
     const [loading, setLoading] = useState(true);
 
@@ -44,9 +48,13 @@ export default function EditPlaceScreen() {
 
             const place = response.data.data;
 
-            setName(place.name);
+            setName(place.name ?? "");
+            setAddress(place.address ?? "");
+            setRating(Number(place.rating) || 0);
 
-            setRating(Number(place.rating));
+            setPros(place.pros?.join(", ") ?? "");
+            setCons(place.cons?.join(", ") ?? "");
+            setFavoriteDishes(place.favorite_dishes?.join(", ") ?? "");
         } catch (error) {
             console.log(error);
         } finally {
@@ -58,9 +66,21 @@ export default function EditPlaceScreen() {
         try {
             await api.put(`/restaurants/${id}`, {
                 name,
+                address,
                 rating,
+                pros: pros
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                cons: cons
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                favorite_dishes: favoriteDishes
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
             });
-
             showSuccessToast(
                 "Success",
                 "Place updated!"
@@ -100,6 +120,22 @@ export default function EditPlaceScreen() {
                     />
                 </View>
 
+                {/* ADDRESS */}
+                <View className="mb-6">
+                    <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                        Address
+                    </Text>
+
+                    <TextInput
+                        value={address}
+                        onChangeText={setAddress}
+                        placeholder="SM Clark, Angeles, Pampanga"
+                        placeholderTextColor="#71717a"
+                        multiline
+                        className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+                    />
+                </View>
+
                 {/* RATING */}
                 <View className="mb-8">
                     <Text className="mb-3 text-sm font-bold uppercase tracking-widest text-amber-400">
@@ -112,6 +148,53 @@ export default function EditPlaceScreen() {
                             onChange={setRating}
                         />
                     </View>
+                </View>
+                {/* PROS */}
+                <View className="mb-6">
+                    <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                        Pros
+                    </Text>
+
+                    <TextInput
+                        value={pros}
+                        onChangeText={setPros}
+                        placeholder="Good food, Cozy, Cheap"
+                        placeholderTextColor="#71717a"
+                        multiline
+                        className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+                    />
+                </View>
+
+                {/* CONS */}
+                <View className="mb-6">
+                    <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                        Cons
+                    </Text>
+
+                    <TextInput
+                        value={cons}
+                        onChangeText={setCons}
+                        placeholder="Crowded, Slow service"
+                        placeholderTextColor="#71717a"
+                        multiline
+                        className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+                    />
+                </View>
+
+                {/* FAVORITE DISHES */}
+                <View className="mb-8">
+                    <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                        Favorite Dishes
+                    </Text>
+
+                    <TextInput
+                        value={favoriteDishes}
+                        onChangeText={setFavoriteDishes}
+                        placeholder="Beef Curry, Chowfan"
+                        placeholderTextColor="#71717a"
+                        multiline
+                        className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+                    />
                 </View>
 
                 <AppButton
