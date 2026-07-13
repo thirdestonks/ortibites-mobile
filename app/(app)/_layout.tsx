@@ -14,7 +14,9 @@ export default function AppLayout() {
 
   return (
     <View className="flex-1 bg-zinc-950">
-      <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
+      <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+        <Stack.Screen name="create" options={{ animation: "slide_from_bottom" }} />
+      </Stack>
       <BottomNav />
     </View>
   );

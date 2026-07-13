@@ -1,11 +1,23 @@
-import { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 import { useAuthStore } from "../../stores/authStore";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
-import ScreenWrapper from "../../components/ScreenWrapper";
-import ScreenHeader from "../../components/ScreenHeader";
 import AppButton from "../../components/AppButton";
+import GlowDots from "../../components/GlowDots";
 
 export default function LoginScreen() {
   const signIn = useAuthStore((s) => s.signIn);
@@ -15,6 +27,16 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const glow = useSharedValue(0);
+
+  useEffect(() => {
+    glow.value = withRepeat(withTiming(1, { duration: 3000 }), -1, true);
+  }, [glow]);
+
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: 0.28 * glow.value,
+  }));
 
   const handleSubmit = async () => {
     if (!email.trim() || !password) {
@@ -34,7 +56,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // On success, onAuthStateChange flips the session and the guard routes us in.
     showSuccessToast(
       "Welcome",
       mode === "signin" ? "Logged in!" : "Account created!"
@@ -42,53 +63,89 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScreenWrapper scroll>
-      <ScreenHeader title="ORTIBITES" subtitle="log in to your food memories 🍜" />
+    <ImageBackground
+      source={require("../../assets/images/bgg.png")}
+      resizeMode="cover"
+      className="flex-1"
+    >
+      <View className="flex-1 bg-black/70">
+        <GlowDots />
 
-      <View className="rounded-3xl border border-zinc-800 bg-zinc-950/90 p-5">
-        {/* EMAIL */}
-        <View className="mb-6">
-          <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
-            Email
-          </Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor="#71717a"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
-          />
-        </View>
-
-        {/* PASSWORD */}
-        <View className="mb-8">
-          <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
-            Password
-          </Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor="#71717a"
-            secureTextEntry
-            className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
-          />
-        </View>
-
-        <AppButton
-          title={busy ? "PLEASE WAIT…" : mode === "signin" ? "LOG IN" : "SIGN UP"}
-          onPress={handleSubmit}
-        />
-
-        <Text
-          onPress={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-5 text-center text-sm font-semibold text-zinc-400"
+        <KeyboardAvoidingView
+          className="flex-1 justify-center px-8"
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          {mode === "signin" ? "No account? Sign up" : "Have an account? Log in"}
-        </Text>
+          {/* HERO */}
+          <View className="mb-10 items-center">
+            <Text className="text-6xl">🍜</Text>
+            <Text
+              className="mt-3 text-5xl font-black tracking-widest text-white"
+              style={{
+                textShadowColor: "rgba(239,68,68,0.9)",
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 16,
+              }}
+            >
+              ORTIBITES
+            </Text>
+            <Text className="mt-2 text-zinc-300">your food memories 🍜</Text>
+          </View>
+
+          {/* FORM CARD */}
+          <View className="relative">
+            <Animated.View
+              style={haloStyle}
+              className="absolute -bottom-4 left-1 right-1 top-8 rounded-3xl bg-red-500"
+            />
+            <View className="rounded-3xl border border-zinc-800 bg-zinc-950/90 p-5">
+            <View className="mb-5">
+              <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                Email
+              </Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor="#71717a"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+              />
+            </View>
+
+            <View className="mb-7">
+              <Text className="mb-2 text-sm font-bold uppercase tracking-widest text-amber-400">
+                Password
+              </Text>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor="#71717a"
+                secureTextEntry
+                className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-white"
+              />
+            </View>
+
+            <AppButton
+              title={
+                busy ? "PLEASE WAIT…" : mode === "signin" ? "LOG IN" : "SIGN UP"
+              }
+              onPress={handleSubmit}
+            />
+
+            <Text
+              onPress={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="mt-5 text-center text-sm font-semibold text-zinc-400"
+            >
+              {mode === "signin"
+                ? "No account? Sign up"
+                : "Have an account? Log in"}
+            </Text>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </View>
-    </ScreenWrapper>
+    </ImageBackground>
   );
 }

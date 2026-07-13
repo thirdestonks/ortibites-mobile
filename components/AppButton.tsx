@@ -1,29 +1,35 @@
-import {
-  Pressable,
-  Text,
-} from "react-native";
+import { Pressable, Text } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
-export default function AppButton({
-  title,
-  onPress,
-}: any) {
+import { PRESS_SPRING } from "../utils/motion";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export default function AppButton({ title, onPress }: any) {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.97, PRESS_SPRING);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, PRESS_SPRING);
+      }}
+      style={style}
       className="mb-5 rounded-xl bg-white"
-      style={({ pressed }) => ({
-        transform: [
-          {
-            scale: pressed ? 0.97 : 1,
-          },
-        ],
-
-        opacity: pressed ? 0.85 : 1,
-      })}
     >
       <Text className="p-4 text-center text-lg font-black text-black">
         {title}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }

@@ -1,56 +1,108 @@
-import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+
+import type { Place } from "../types/place";
+import { getRatingMeta } from "../utils/rating";
+import { STAGGER_MS, DURATION, EASE_OUT } from "../utils/motion";
+import { useGuardedPush } from "../utils/navigation";
+import { mono, ReceiptEdge, ReceiptHeader, ReceiptLine } from "./receipt";
 
 interface PlaceCardProps {
-  id: number;
-  name: string;
-  address: string;
-  rating: number;
+  place: Place;
+  index?: number;
 }
 
-export default function PlaceCard({
-  id,
-  name,
-  address,
-  rating,
-}: PlaceCardProps) {
+function formatVisited(dateStr?: string | null): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const month = d.toLocaleString("en-US", { month: "short" });
+  const year = String(d.getFullYear()).slice(-2);
+  return `${month} '${year}`.toUpperCase();
+}
+
+export default function PlaceCard({ place, index = 0 }: PlaceCardProps) {
+  const push = useGuardedPush();
+
+  const rating = place.rating ?? 0;
+  const meta = getRatingMeta(rating);
+  const filled = Math.round(rating);
+  const visited = formatVisited(place.visited_at ?? place.created_at);
+  const dish = place.favorite_dishes?.[0];
+  const orderNo = `#${String(place.id).padStart(4, "0")}`;
+
   return (
-    <Pressable
-      onPress={() => router.push(`/place/${id}`)}
-      style={({ pressed }) => ({
-        transform: [{ scale: pressed ? 0.97 : 1 }],
-        opacity: pressed ? 0.85 : 1,
-      })}
+    <Animated.View
+      entering={FadeInDown.delay(index * STAGGER_MS)
+        .duration(DURATION.base)
+        .easing(EASE_OUT)}
+      className="mb-4"
     >
-      <View
-        className="mb-4 flex-row gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 8,
-          elevation: 3,
-        }}
+      <Pressable
+        onPress={() => push(`/place/${place.id}`)}
+        style={({ pressed }) => ({
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          opacity: pressed ? 0.9 : 1,
+        })}
       >
-        {/* AMBER ACCENT BAR */}
-        <View className="w-1.5 self-stretch rounded-full bg-amber-400" />
+        <ReceiptEdge dir="top" />
 
-        {/* CONTENT */}
-        <View className="flex-1">
-          <Text className="text-xl font-bold text-white">
-            {name}
+        <View className="bg-zinc-900 px-5 pb-4 pt-2">
+          <ReceiptHeader caption="DINER" />
+
+          {/* META */}
+          <View className="mt-3 flex-row justify-between">
+            <Text style={mono} className="text-xs text-zinc-500">
+              {visited ?? "—"}
+            </Text>
+            <Text style={mono} className="text-xs text-zinc-500">
+              {orderNo}
+            </Text>
+          </View>
+
+          <View className="my-2 border-t border-dashed border-zinc-700" />
+
+          {/* ITEM */}
+          <Text
+            style={mono}
+            className="text-base font-bold text-amber-100"
+            numberOfLines={1}
+          >
+            {place.name.toUpperCase()}
           </Text>
 
-          <Text className="mt-1 text-zinc-400" numberOfLines={1}>
-            {address}
+          <View className="mt-1 flex-row">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Text
+                key={n}
+                style={mono}
+                className={n <= filled ? "text-amber-400" : "text-zinc-700"}
+              >
+                ★
+              </Text>
+            ))}
+          </View>
+
+          {dish ? <ReceiptLine label="DISH" value={dish} /> : null}
+          {place.address ? (
+            <ReceiptLine label="LOC" value={place.address} />
+          ) : null}
+
+          <View className="my-2 border-t border-dashed border-zinc-700" />
+
+          <ReceiptLine label="RATING" value={`${rating}/5`} />
+
+          {/* SENTIMENT STAMP */}
+          <Text
+            style={mono}
+            className={`mt-2 text-center text-xs font-bold ${meta.color}`}
+          >
+            [ {meta.label} ]
           </Text>
         </View>
 
-        {/* RATING PILL */}
-        <View className="self-start rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1">
-          <Text className="text-amber-400">⭐ {rating}</Text>
-        </View>
-      </View>
-    </Pressable>
+        <ReceiptEdge dir="bottom" />
+      </Pressable>
+    </Animated.View>
   );
 }
