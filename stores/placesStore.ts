@@ -9,6 +9,8 @@ export type NewPlace = {
   pros?: string[]
   cons?: string[]
   favorite_dishes?: string[]
+  latitude?: number | null
+  longitude?: number | null
 }
 
 interface PlacesState {

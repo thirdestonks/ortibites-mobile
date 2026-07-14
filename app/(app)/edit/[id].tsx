@@ -10,6 +10,7 @@ import { showErrorToast, showSuccessToast } from "../../../components/Toast";
 
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppButton from "../../../components/AppButton";
+import LocationPicker from "../../../components/LocationPicker";
 import StarRating from "../../../components/StarRating";
 import PageLoader from "../../../components/PageLoader";
 import {
@@ -28,6 +29,8 @@ export default function EditPlaceScreen() {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
   const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [pros, setPros] = useState("");
   const [cons, setCons] = useState("");
   const [favoriteDishes, setFavoriteDishes] = useState("");
@@ -44,6 +47,8 @@ export default function EditPlaceScreen() {
     if (place) {
       setName(place.name ?? "");
       setAddress(place.address ?? "");
+      setLatitude(place.latitude ?? null);
+      setLongitude(place.longitude ?? null);
       setRating(Number(place.rating) || 0);
 
       setPros(place.pros?.join(", ") ?? "");
@@ -71,6 +76,8 @@ export default function EditPlaceScreen() {
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
+      latitude,
+      longitude,
     });
 
     if (error) {
@@ -117,13 +124,15 @@ export default function EditPlaceScreen() {
         <Text style={mono} className="mb-2 text-xs font-bold uppercase text-amber-400">
           Address
         </Text>
-        <TextInput
-          value={address}
-          onChangeText={setAddress}
-          placeholder="SM Clark, Angeles, Pampanga"
-          placeholderTextColor="#71717a"
-          multiline
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
+        <LocationPicker
+          address={address}
+          latitude={latitude}
+          longitude={longitude}
+          onAddressChange={setAddress}
+          onCoordsChange={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
         />
 
         <DashDivider />

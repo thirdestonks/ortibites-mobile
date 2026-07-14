@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "../../components/Toast";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import AppButton from "../../components/AppButton";
+import LocationPicker from "../../components/LocationPicker";
 import {
   mono,
   ReceiptEdge,
@@ -23,6 +24,8 @@ export default function CreatePlaceScreen() {
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [rating, setRating] = useState(0);
   const [pros, setPros] = useState<string[]>([]);
   const [cons, setCons] = useState<string[]>([]);
@@ -71,6 +74,8 @@ export default function CreatePlaceScreen() {
       pros,
       cons,
       favorite_dishes: favoriteDishes,
+      latitude,
+      longitude,
     });
 
     if (error) {
@@ -113,13 +118,15 @@ export default function CreatePlaceScreen() {
         <Text style={mono} className="mb-2 text-xs font-bold uppercase text-amber-400">
           Address
         </Text>
-        <TextInput
-          value={address}
-          onChangeText={setAddress}
-          placeholder="SM Clark, Angeles, Pampanga"
-          placeholderTextColor="#71717a"
-          multiline
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
+        <LocationPicker
+          address={address}
+          latitude={latitude}
+          longitude={longitude}
+          onAddressChange={setAddress}
+          onCoordsChange={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
         />
 
         <DashDivider />

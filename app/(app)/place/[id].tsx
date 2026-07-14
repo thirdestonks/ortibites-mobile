@@ -75,20 +75,21 @@ export default function PlaceDetailsScreen() {
     ]);
   };
 
-  const mapsHref = place?.address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `${place.name} ${place.address}`
-      )}`
-    : null;
+  const mapsHref =
+    place?.latitude != null && place?.longitude != null
+      ? `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`
+      : place?.address
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${place.name} ${place.address}`
+        )}`
+      : null;
 
   const openMaps = async () => {
     if (!mapsHref) return;
 
-    const supported = await Linking.canOpenURL(mapsHref);
-
-    if (supported) {
+    try {
       await Linking.openURL(mapsHref);
-    } else {
+    } catch {
       Alert.alert("Error", "Cannot open maps.");
     }
   };
