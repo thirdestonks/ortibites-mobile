@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { FlatList, Pressable, Text } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 
 import { useGuardedPush } from "../../utils/navigation";
@@ -36,13 +36,27 @@ export default function HomeScreen() {
     </Pressable>
   );
 
+  const headerActions = (
+    <View className="items-end gap-2">
+      <Pressable
+        onPress={() => push("/roulette")}
+        className="rounded-full border border-amber-400/60 bg-amber-400/10 px-4 py-2"
+      >
+        <Text className="text-xs font-bold uppercase tracking-widest text-amber-400">
+          🎲 Decide
+        </Text>
+      </Pressable>
+      {logoutButton}
+    </View>
+  );
+
   if (loading && places.length === 0) {
     return (
       <ScreenWrapper>
         <ScreenHeader
           title="ORTIBITES"
           subtitle="kain ano tara?? 🍜"
-          right={logoutButton}
+          right={headerActions}
         />
 
         <AppButton title="+ ADD PLACE" onPress={() => push("/create")} />
@@ -59,7 +73,7 @@ export default function HomeScreen() {
       <ScreenHeader
         title="ORTIBITES"
         subtitle="kain ano tara?? 🍜"
-        right={logoutButton}
+        right={headerActions}
       />
 
       <AppButton title="+ ADD PLACE" onPress={() => push("/create")} />

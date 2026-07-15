@@ -40,6 +40,13 @@ Instead of trying to become another generic food finder platform, OrtiBites is d
 * ✅ Save favorite dishes
 * ✅ Restaurant ratings system
 * ✅ Pull-to-refresh support
+* ✅ User authentication (per-user cloud sync)
+* ✅ Google Maps deep link from place detail
+
+## Fun Features
+
+* ✅ **Roulette** — spin a wheel of your saved spots (or type in your own options) to decide where to eat
+* ✅ **OrtiBites Wrapped** — a Spotify Wrapped-inspired yearly recap: total spots logged, top dish, highest rated spot, average rating, and a receipt-style summary card
 
 ---
 
@@ -69,44 +76,27 @@ Instead of trying to become another generic food finder platform, OrtiBites is d
 
 * Supabase (Postgres + Auth + Row Level Security)
 
-### Environment setup
-
-Copy `.env.example` to `.env` and fill in your Supabase project values
-(Supabase dashboard → Settings → API):
-
-```
-EXPO_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-PUBLIC-KEY
-```
-
-The anon key is public by design — security is enforced by RLS. Restart the dev
-server with `pnpm start -c` after editing `.env`.
-
-Database setup lives in `docs/supabase/schema.sql` (table + RLS) and
-`docs/supabase/seed.sql` (sample data). New to Supabase/Expo? Read
-`docs/supabase-expo-crash-course.md`.
-
 ---
 
 # 🛣️ Roadmap
 
-## v1.1.0
+## ✅ Shipped
 
-* Memories Timeline
-* Search functionality
-* Better PlaceCard UI polish
+* Supabase migration (auth, cloud sync, Row Level Security)
+* Roulette — spin-the-wheel spot picker
+* OrtiBites Wrapped — yearly recap
+* Google Maps deep link from place detail
 
 ## v1.2.0
 
+* Search functionality
 * Place images
-* Maps integration
-* Restaurant address improvements
+* Better PlaceCard UI polish
 
 ## v2.0
 
 * AI Pick For Us feature
-* User authentication
-* Cloud sync
+* Wrapped image export / sharing
 * Smart recommendations
 
 ---
