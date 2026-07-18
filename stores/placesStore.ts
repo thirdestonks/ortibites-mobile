@@ -9,6 +9,7 @@ export type NewPlace = {
   pros?: string[]
   cons?: string[]
   favorite_dishes?: string[]
+  hub_id?: number | null
   latitude?: number | null
   longitude?: number | null
 }
@@ -21,6 +22,7 @@ interface PlacesState {
   createPlace: (input: NewPlace) => Promise<{ error: string | null }>
   updatePlace: (id: number | string, input: Partial<NewPlace>) => Promise<{ error: string | null }>
   deletePlace: (id: number | string) => Promise<{ error: string | null }>
+  incrementRevisit: (id: number) => Promise<void>
 }
 
 export const usePlacesStore = create<PlacesState>((set) => ({
@@ -63,5 +65,25 @@ export const usePlacesStore = create<PlacesState>((set) => ({
   deletePlace: async (id) => {
     const { error } = await supabase.from('places').delete().eq('id', id)
     return { error: error?.message ?? null }
+  },
+
+  incrementRevisit: async (id) => {
+    // optimistic bump
+    set((s) => ({
+      places: s.places.map((p) =>
+        p.id === id ? { ...p, revisit_count: (p.revisit_count ?? 0) + 1 } : p
+      ),
+    }))
+    const { error } = await supabase.rpc('increment_revisit', { place_id: id })
+    if (error) {
+      // rollback on failure
+      set((s) => ({
+        places: s.places.map((p) =>
+          p.id === id
+            ? { ...p, revisit_count: Math.max(0, (p.revisit_count ?? 1) - 1) }
+            : p
+        ),
+      }))
+    }
   },
 }))

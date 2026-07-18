@@ -13,6 +13,7 @@ import AppButton from "../../../components/AppButton";
 import LocationPicker from "../../../components/LocationPicker";
 import StarRating from "../../../components/StarRating";
 import PageLoader from "../../../components/PageLoader";
+import HubPicker from "../../../components/HubPicker";
 import {
   mono,
   ReceiptEdge,
@@ -34,6 +35,7 @@ export default function EditPlaceScreen() {
   const [pros, setPros] = useState("");
   const [cons, setCons] = useState("");
   const [favoriteDishes, setFavoriteDishes] = useState("");
+  const [hubId, setHubId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +56,7 @@ export default function EditPlaceScreen() {
       setPros(place.pros?.join(", ") ?? "");
       setCons(place.cons?.join(", ") ?? "");
       setFavoriteDishes(place.favorite_dishes?.join(", ") ?? "");
+      setHubId(place.hub_id ?? null);
     }
 
     setLoading(false);
@@ -76,6 +79,7 @@ export default function EditPlaceScreen() {
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
+      hub_id: hubId,
       latitude,
       longitude,
     });
@@ -144,6 +148,11 @@ export default function EditPlaceScreen() {
         <View className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
           <StarRating value={rating} onChange={setRating} />
         </View>
+
+        <DashDivider />
+
+        {/* STATION */}
+        <HubPicker value={hubId} onChange={setHubId} />
 
         <DashDivider />
 

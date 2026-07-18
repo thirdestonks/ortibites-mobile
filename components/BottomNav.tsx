@@ -3,8 +3,8 @@ import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
   withSpring,
+  withSequence,
   withTiming,
 } from "react-native-reanimated";
 
@@ -28,60 +28,50 @@ export default function BottomNav() {
   }));
 
   const go = (route: string, item: { shake: () => void }) => {
-    if (pathname === route) {
-      item.shake();
-    } else {
-      push(route);
-    }
+    if (pathname === route) item.shake();
+    else push(route);
   };
 
-  const goFab = () => {
-    if (pathname === "/create") {
-      fabShake.value = withSequence(
-        withTiming(-6, { duration: 50 }),
-        withTiming(6, { duration: 50 }),
-        withTiming(-5, { duration: 50 }),
-        withTiming(5, { duration: 50 }),
-        withTiming(0, { duration: 50 })
-      );
-    } else {
-      push("/create");
-    }
-  };
+  const StationNode = ({ icon, label }: { icon: string; label: string }) => (
+    <View className="items-center">
+      <View className="h-14 w-14 items-center justify-center rounded-full border-2 border-amber-400 bg-zinc-950">
+        <Text className="text-xl">{icon}</Text>
+      </View>
+      <Text className="mt-1 text-xs font-bold uppercase tracking-widest text-zinc-300">
+        {label}
+      </Text>
+    </View>
+  );
 
   return (
-    <View className="absolute bottom-0 w-full px-4 pb-10">
-      <View className="relative flex-row items-center justify-center gap-60 rounded-3xl border border-zinc-800 bg-zinc-950/95 px-10 py-5">
-        {/* HOME */}
-        <AnimatedPressable
-          onPress={() => go("/", home)}
-          style={home.shakeStyle}
-          className="items-center"
-        >
-          <Text className="text-2xl text-zinc-300">⌂</Text>
-          <Text className="text-zinc-300">Home</Text>
+    <View className="absolute bottom-0 w-full px-6 pb-8">
+      <View className="flex-row items-center justify-between">
+        {/* HOME node */}
+        <AnimatedPressable onPress={() => go("/", home)} style={home.shakeStyle}>
+          <StationNode icon="🏠" label="Home" />
         </AnimatedPressable>
 
-        {/* MEMORY */}
-        <AnimatedPressable
-          onPress={() => go("/memories", memory)}
-          style={memory.shakeStyle}
-          className="items-center"
-        >
-          <Text className="text-2xl text-amber-400">🕒</Text>
-          <Text className="text-amber-400">Memory</Text>
-        </AnimatedPressable>
+        {/* connector — left */}
+        <View className="mb-5 h-0.5 flex-1 bg-amber-400/60" />
 
-        {/* FLOATING BUTTON */}
+        {/* TERMINUS (+) */}
         <AnimatedPressable
-          onPress={goFab}
-          onPressIn={() => {
-            fabScale.value = withSpring(0.88, PRESS_SPRING);
+          onPress={() => {
+            if (pathname === "/create") {
+              fabShake.value = withSequence(
+                withTiming(-6, { duration: 50 }),
+                withTiming(6, { duration: 50 }),
+                withTiming(-5, { duration: 50 }),
+                withTiming(5, { duration: 50 }),
+                withTiming(0, { duration: 50 })
+              );
+            } else {
+              push("/create");
+            }
           }}
-          onPressOut={() => {
-            fabScale.value = withSpring(1, PRESS_SPRING);
-          }}
-          className="absolute -top-8 h-20 w-20 items-center justify-center rounded-full bg-orange-400"
+          onPressIn={() => (fabScale.value = withSpring(0.88, PRESS_SPRING))}
+          onPressOut={() => (fabScale.value = withSpring(1, PRESS_SPRING))}
+          className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-orange-400"
           style={[
             fabStyle,
             {
@@ -94,6 +84,14 @@ export default function BottomNav() {
           ]}
         >
           <Text className="text-5xl text-black">+</Text>
+        </AnimatedPressable>
+
+        {/* connector — right */}
+        <View className="mb-5 h-0.5 flex-1 bg-amber-400/60" />
+
+        {/* MEMORY node */}
+        <AnimatedPressable onPress={() => go("/memories", memory)} style={memory.shakeStyle}>
+          <StationNode icon="🕒" label="Memory" />
         </AnimatedPressable>
       </View>
     </View>

@@ -12,6 +12,7 @@ import { showErrorToast, showSuccessToast } from "../../components/Toast";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import AppButton from "../../components/AppButton";
 import LocationPicker from "../../components/LocationPicker";
+import HubPicker from "../../components/HubPicker";
 import {
   mono,
   ReceiptEdge,
@@ -33,6 +34,7 @@ export default function CreatePlaceScreen() {
   const [prosInput, setProsInput] = useState("");
   const [consInput, setConsInput] = useState("");
   const [favoriteDishInput, setFavoriteDishInput] = useState("");
+  const [hubId, setHubId] = useState<number | null>(null);
 
   const addItem = (
     value: string,
@@ -74,6 +76,7 @@ export default function CreatePlaceScreen() {
       pros,
       cons,
       favorite_dishes: favoriteDishes,
+      hub_id: hubId,
       latitude,
       longitude,
     });
@@ -138,6 +141,11 @@ export default function CreatePlaceScreen() {
         <View className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
           <StarRating value={rating} onChange={setRating} />
         </View>
+
+        <DashDivider />
+
+        {/* STATION */}
+        <HubPicker value={hubId} onChange={setHubId} />
 
         <DashDivider />
 

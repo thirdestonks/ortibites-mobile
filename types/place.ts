@@ -7,6 +7,8 @@ export interface Place {
   pros: string[]
   cons: string[]
   favorite_dishes: string[]
+  hub_id?: number | null
+  revisit_count?: number
   latitude?: number | null
   longitude?: number | null
   visited_at?: string | null

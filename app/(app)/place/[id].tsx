@@ -4,6 +4,7 @@ import { useFocusEffect, router, useLocalSearchParams } from "expo-router";
 import { Alert, Linking, Text, View } from "react-native";
 
 import { usePlacesStore } from "../../../stores/placesStore";
+import { useHubsStore } from "../../../stores/hubsStore";
 import { useGuardedPush } from "../../../utils/navigation";
 import { getRatingMeta } from "../../../utils/rating";
 import type { Place } from "../../../types/place";
@@ -36,6 +37,11 @@ export default function PlaceDetailsScreen() {
 
   const fetchPlace = usePlacesStore((s) => s.fetchPlace);
   const deletePlace = usePlacesStore((s) => s.deletePlace);
+  const incrementRevisit = usePlacesStore((s) => s.incrementRevisit);
+
+  const fetchHubs = useHubsStore((s) => s.fetchHubs);
+  const hubs = useHubsStore((s) => s.hubs);
+
   const push = useGuardedPush();
 
   const [place, setPlace] = useState<Place | null>(null);
@@ -44,6 +50,7 @@ export default function PlaceDetailsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadPlace();
+      loadHubs();
     }, [id])
   );
 
@@ -51,6 +58,18 @@ export default function PlaceDetailsScreen() {
     const data = await fetchPlace(id as string);
     setPlace(data);
     setLoading(false);
+  };
+
+  const loadHubs = async () => {
+    await fetchHubs();
+  };
+
+  const handleRevisit = () => {
+    if (!place) return;
+    incrementRevisit(place.id);
+    setPlace((prev) =>
+      prev ? { ...prev, revisit_count: (prev.revisit_count ?? 0) + 1 } : prev
+    );
   };
 
   const handleDelete = () => {
@@ -114,6 +133,11 @@ export default function PlaceDetailsScreen() {
   const visited = formatVisited(place.visited_at ?? place.created_at);
   const orderNo = `#${String(place.id).padStart(4, "0")}`;
 
+  const hubName =
+    place.hub_id && hubs.length > 0
+      ? hubs.find((h) => h.id === place.hub_id)?.name ?? "UNSORTED"
+      : "UNSORTED";
+
   return (
     <ScreenWrapper scroll>
       <ReceiptEdge dir="top" />
@@ -160,6 +184,23 @@ export default function PlaceDetailsScreen() {
         >
           [ {meta.label} ]
         </Text>
+
+        <View className="mt-2">
+          <ReceiptLine label="STATION" value={hubName} />
+        </View>
+
+        <View className="mt-1 flex-row items-center justify-between">
+          <Text style={mono} className="text-xs text-zinc-400">
+            VISITS: {place.revisit_count ?? 0}
+          </Text>
+          <Text
+            style={mono}
+            onPress={handleRevisit}
+            className="rounded-md bg-zinc-800 px-3 py-1 text-xs font-semibold text-amber-400"
+          >
+            REVISIT
+          </Text>
+        </View>
 
         <DashDivider />
 
