@@ -8,16 +8,20 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import Mascot, { type MascotPose } from "./Mascot";
 import { DURATION, EASE_OUT } from "../utils/motion";
 
 interface EmptyStateProps {
   emoji?: string;
+  /** Show May in this pose instead of the emoji. */
+  pose?: MascotPose;
   title: string;
   subtitle?: string;
 }
 
 export default function EmptyState({
   emoji = "🍽️",
+  pose,
   title,
   subtitle,
 }: EmptyStateProps) {
@@ -40,9 +44,14 @@ export default function EmptyState({
       entering={FadeIn.duration(DURATION.base)}
       className="flex-1 items-center justify-center"
     >
-      <Animated.Text style={bobStyle} className="text-7xl">
-        {emoji}
-      </Animated.Text>
+      {pose ? (
+        // Mascot carries its own bob, so it is not wrapped in bobStyle.
+        <Mascot pose={pose} size={160} />
+      ) : (
+        <Animated.Text style={bobStyle} className="text-7xl">
+          {emoji}
+        </Animated.Text>
+      )}
 
       <Text className="mt-5 text-lg font-bold tracking-[6px] text-amber-400">
         {title}

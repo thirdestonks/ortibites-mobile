@@ -13,6 +13,7 @@ import ScreenWrapper from "../../components/ScreenWrapper";
 import AppButton from "../../components/AppButton";
 import LocationPicker from "../../components/LocationPicker";
 import HubPicker from "../../components/HubPicker";
+import Mascot from "../../components/Mascot";
 import {
   mono,
   ReceiptEdge,
@@ -97,6 +98,11 @@ export default function CreatePlaceScreen() {
 
       <View className="bg-zinc-900 px-5 pb-6 pt-3">
         <ReceiptHeader caption="NEW ORDER" />
+
+        <View className="items-center pt-2">
+          <Mascot pose="explorer" size={110} />
+        </View>
+
         <Text style={mono} className="mt-2 text-center text-xs text-zinc-500">
           add another food memory 🍜
         </Text>

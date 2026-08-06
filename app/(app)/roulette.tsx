@@ -6,6 +6,7 @@ import ScreenWrapper from "../../components/ScreenWrapper";
 import ScreenHeader from "../../components/ScreenHeader";
 import AppButton from "../../components/AppButton";
 import SpinningWheel, { WheelItem } from "../../components/SpinningWheel";
+import Mascot from "../../components/Mascot";
 import { usePlacesStore } from "../../stores/placesStore";
 import { useGuardedPush } from "../../utils/navigation";
 
@@ -86,20 +87,28 @@ export default function RouletteScreen() {
         </Text>
       </View>
 
-      {/* WINNER */}
-      {winner ? (
-        <View className="mb-6 items-center">
-          <Text className="mb-2 text-center text-2xl font-black uppercase tracking-widest text-amber-400">
-            🎉 {winner.label}
+      {/* MAY REACTS — thinking while undecided, happy once the wheel lands */}
+      <View className="mb-6 items-center">
+        <Mascot pose={winner ? "happy" : "thinking"} size={130} />
+
+        {winner ? (
+          <>
+            <Text className="mb-2 mt-2 text-center text-2xl font-black uppercase tracking-widest text-amber-400">
+              🎉 {winner.label}
+            </Text>
+            {winner.placeId ? (
+              <AppButton
+                title="TAKE ME THERE"
+                onPress={() => push(`/place/${winner.placeId}`)}
+              />
+            ) : null}
+          </>
+        ) : (
+          <Text className="mt-2 text-center text-sm text-zinc-500">
+            {spinning ? "hmm…" : "can't decide? let the wheel pick 🎲"}
           </Text>
-          {winner.placeId ? (
-            <AppButton
-              title="TAKE ME THERE"
-              onPress={() => push(`/place/${winner.placeId}`)}
-            />
-          ) : null}
-        </View>
-      ) : null}
+        )}
+      </View>
 
       {/* MANUAL INPUT */}
       <View className="mb-4 flex-row items-center gap-2">

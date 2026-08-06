@@ -86,7 +86,11 @@ export default function MetroScreen() {
       <ScreenHeader title="ORTIBITES" subtitle="kain ano tara?? 🍜" right={headerActions} />
 
       {places.length === 0 && hubs.length === 0 ? (
-        <EmptyState title="NO BITES YET" subtitle="Add your first food spot 🍜" />
+        <EmptyState
+          pose="explorer"
+          title="NO BITES YET"
+          subtitle="Add your first food spot 🍜"
+        />
       ) : (
         <ScrollView
           ref={scrollRef}
