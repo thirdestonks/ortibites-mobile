@@ -89,8 +89,8 @@ export default function BottomNav() {
         {/* connector — right */}
         <View className="mb-5 h-0.5 flex-1 bg-amber-400/60" />
 
-        {/* MEMORY node */}
-        <AnimatedPressable onPress={() => go("/memories", memory)} style={memory.shakeStyle}>
+        {/* MEMORY node — opens Wrapped directly, no interstitial */}
+        <AnimatedPressable onPress={() => go("/wrapped", memory)} style={memory.shakeStyle}>
           <StationNode icon="🕒" label="Memory" />
         </AnimatedPressable>
       </View>

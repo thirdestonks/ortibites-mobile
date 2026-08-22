@@ -7,6 +7,9 @@ import {
 export default function ScreenWrapper({
     children,
     scroll = false,
+    // Heavier scrim, for screens whose content needs to sit forward of the
+    // busy wallpaper.
+    dim = false,
 }: any) {
     return (
         <ImageBackground
@@ -15,7 +18,7 @@ export default function ScreenWrapper({
             className="flex-1"
         >
             {/* OVERLAY */}
-            <View className="flex-1 bg-black/70">
+            <View className={`flex-1 ${dim ? "bg-black/90" : "bg-black/70"}`}>
                 {scroll ? (
                     <ScrollView
                         className="flex-1"

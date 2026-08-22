@@ -86,6 +86,10 @@ export function PeriodToggle({
   period: WrappedPeriod;
   onChange: (period: WrappedPeriod) => void;
 }) {
+  // RN clips the final glyph when letterSpacing is applied inside a flex-sized
+  // box, so these labels use padding + shrink-to-fit instead of tracking-*.
+  const labelStyle = { ...mono, letterSpacing: 0.5 };
+
   const Tab = ({
     label,
     active,
@@ -97,13 +101,15 @@ export function PeriodToggle({
   }) => (
     <Pressable
       onPress={onPress}
-      className={`flex-1 items-center rounded-full py-2 ${
+      className={`flex-1 items-center rounded-full px-1 py-2 ${
         active ? "bg-amber-400" : ""
       }`}
     >
       <Text
-        style={mono}
-        className={`text-xs font-bold tracking-wider ${
+        style={labelStyle}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        className={`text-xs font-bold ${
           active ? "text-black" : "text-zinc-400"
         }`}
       >
@@ -124,11 +130,13 @@ export function PeriodToggle({
         active={period === "monthly"}
         onPress={() => onChange("monthly")}
       />
-      <View className="flex-1 flex-row items-center justify-center gap-1 rounded-full py-2 opacity-40">
+      <View className="flex-1 flex-row items-center justify-center gap-1 rounded-full px-1 py-2 opacity-40">
         <Ionicons name="lock-closed" size={10} color="#a1a1aa" />
         <Text
-          style={mono}
-          className="text-xs font-bold tracking-wider text-zinc-500"
+          style={labelStyle}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          className="text-xs font-bold text-zinc-500"
         >
           YEARLY
         </Text>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import Animated, { ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ScreenHeader from "../../components/ScreenHeader";
@@ -9,10 +9,29 @@ import { usePlacesStore } from "../../stores/placesStore";
 import {
   computeWrappedStats,
   filterPlacesByPeriod,
-  formatMonthYear,
   type WrappedPeriod,
 } from "../../lib/wrappedStats";
-import { mono, PeriodToggle, PinnedCard } from "../../components/receipt";
+import { mono, PeriodToggle } from "../../components/receipt";
+import {
+  CardCaption,
+  CardDivider,
+  CardLabel,
+  CardValue,
+  pickCardArt,
+  WrappedCard,
+} from "../../components/wrappedCards";
+import { DURATION, EASE_OUT } from "../../utils/motion";
+
+/** Filled stars out of five, so the unearned ones stay visible. */
+const stars = (n: number) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
+
+const starStyle = {
+  color: "#fbbf24",
+  letterSpacing: 2,
+  textShadowColor: "rgba(0,0,0,0.9)",
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 4,
+} as const;
 
 export default function WrappedScreen() {
   const router = useRouter();
@@ -22,6 +41,12 @@ export default function WrappedScreen() {
   const stats = useMemo(
     () => computeWrappedStats(filterPlacesByPeriod(places, period)),
     [places, period]
+  );
+
+  // Drawn once per mount so the three cards don't reshuffle mid-view.
+  const cardArt = useMemo(
+    () => pickCardArt(["spots", "highlights", "rating"]),
+    []
   );
 
   const closeButton = (
@@ -35,7 +60,7 @@ export default function WrappedScreen() {
 
   if (stats.totalSpots === 0) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper dim>
         <ScreenHeader
           title="WRAPPED"
           subtitle="your food story, pinned up"
@@ -58,98 +83,96 @@ export default function WrappedScreen() {
     );
   }
 
-  const since = formatMonthYear(stats.earliestDate);
   const avg = stats.averageRating;
 
+  // Three cards, sized to fit one screen without scrolling. Artwork is drawn
+  // fresh per mount via cardArt, so which piece backs each slot varies visit
+  // to visit.
   const cards = [
-    <PinnedCard key="spots" rotate={-3}>
-      <Text style={mono} className="text-center text-xs text-zinc-400">
-        SPOTS LOGGED
-      </Text>
-      <Text className="mt-1 text-center text-5xl font-black text-amber-400">
-        {stats.totalSpots}
-      </Text>
-    </PinnedCard>,
+    <WrappedCard key="spots" slot="spots" art={cardArt.spots}>
+      <CardLabel>SPOTS LOGGED</CardLabel>
+      <CardValue tone="accent">{stats.totalSpots.toLocaleString()}</CardValue>
+    </WrappedCard>,
 
-    <PinnedCard key="dish" rotate={2}>
-      <Text style={mono} className="text-center text-xs text-zinc-400">
-        TOP DISH
-      </Text>
-      <Text className="mt-1 text-center text-2xl font-black text-white">
-        {stats.topDish ?? "No favorite dish yet"}
-      </Text>
-    </PinnedCard>,
+    // Top Spot and Top Dish share one card, split into two columns so the
+    // paired stats use the safe zone's width rather than its limited height.
+    <WrappedCard key="highlights" slot="highlights" art={cardArt.highlights}>
+      <View className="w-full flex-row items-center">
+        <View className="flex-1 px-1">
+          <CardLabel>TOP SPOT</CardLabel>
+          {stats.highestRated ? (
+            <>
+              <CardValue tone="accent" size="sm">
+                {stats.highestRated.name}
+              </CardValue>
+              <Text style={starStyle} className="mt-0.5 text-center text-xs">
+                {stars(Math.round(stats.highestRated.rating))}
+              </Text>
+            </>
+          ) : (
+            <CardValue size="sm">No ratings yet</CardValue>
+          )}
+        </View>
 
-    <PinnedCard key="spot" rotate={-2}>
-      <Text style={mono} className="text-center text-xs text-zinc-400">
-        TOP SPOT
-      </Text>
-      {stats.highestRated ? (
-        <>
-          <Text className="mt-1 text-center text-2xl font-black text-white">
-            {stats.highestRated.name}
-          </Text>
-          <Text className="mt-2 text-center text-lg text-amber-400">
-            {"★".repeat(Math.round(stats.highestRated.rating))}
-          </Text>
-        </>
-      ) : (
-        <Text className="mt-1 text-center text-zinc-500">No ratings yet</Text>
-      )}
-    </PinnedCard>,
+        <CardDivider />
 
-    <PinnedCard key="avg" rotate={3}>
-      <Text style={mono} className="text-center text-xs text-zinc-400">
-        AVERAGE RATING
-      </Text>
-      {avg !== null ? (
-        <>
-          <Text className="mt-1 text-center text-4xl font-black text-amber-400">
-            {avg.toFixed(1)}/5
-          </Text>
-          <Text className="mt-1 text-center text-zinc-500">
-            across {stats.ratedCount} rated spots
-          </Text>
-        </>
-      ) : (
-        <Text className="mt-1 text-center text-zinc-500">
-          Rate some spots to see this
-        </Text>
-      )}
-    </PinnedCard>,
+        <View className="flex-1 px-1">
+          <CardLabel>TOP DISH</CardLabel>
+          <CardValue size="sm">
+            {stats.topDish ?? "No favorite yet"}
+          </CardValue>
+        </View>
+      </View>
+    </WrappedCard>,
 
-    <PinnedCard key="since" rotate={-1}>
-      <Text style={mono} className="text-center text-xs text-zinc-400">
-        SINCE
-      </Text>
-      <Text className="mt-1 text-center text-2xl font-black text-white">
-        {since ?? "—"}
-      </Text>
-    </PinnedCard>,
+    <WrappedCard key="rating" slot="rating" art={cardArt.rating}>
+      <CardLabel>AVERAGE RATING</CardLabel>
+      <CardValue tone="accent">
+        {avg !== null ? `${avg.toFixed(1)}/5` : "—"}
+      </CardValue>
+      <CardCaption>
+        {avg !== null
+          ? `across ${stats.ratedCount} rated spots`
+          : "rate some spots to see this"}
+      </CardCaption>
+    </WrappedCard>,
   ];
 
   return (
-    <ScreenWrapper scroll>
+    <ScreenWrapper dim>
       <ScreenHeader
         title="WRAPPED"
         subtitle="your food story, pinned up"
         right={closeButton}
       />
 
-      <View className="mb-8">
+      <View className="mb-2">
         <PeriodToggle period={period} onChange={setPeriod} />
       </View>
 
-      <View className="gap-8 pb-10">
+      {/* Three equal rows split whatever height is left. Each card fills its
+          row's height and derives its width from the art's ratio, so the deck
+          scales to the screen instead of scrolling. */}
+      <View className="flex-1 gap-2 pb-1">
         {cards.map((card, i) => (
           <Animated.View
             key={card.key}
-            entering={ZoomIn.delay(i * 160).springify().damping(12)}
+            className="flex-1 items-center justify-center"
+            entering={FadeInDown.delay(i * 110)
+              .duration(DURATION.base)
+              .easing(EASE_OUT)}
           >
             {card}
           </Animated.View>
         ))}
       </View>
+
+      <Text
+        style={{ ...mono, color: "#71717a" }}
+        className="pb-2 text-center text-[10px]"
+      >
+        — ORTIBITES · {period.toUpperCase()} REPORT —
+      </Text>
     </ScreenWrapper>
   );
 }
