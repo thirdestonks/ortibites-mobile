@@ -46,6 +46,9 @@ const CARD_ART_POOL: ImageSourcePropType[] = [
   require("../assets/images/underwaterOne.png"),
   require("../assets/images/terminalOne.png"),
   require("../assets/images/snorlaxOne.png"),
+  require("../assets/images/carOne.png"),
+  require("../assets/images/foodOne.png"),
+  require("../assets/images/umaruOne.png"),
 ];
 
 /**
