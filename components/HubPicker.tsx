@@ -17,6 +17,7 @@ export default function HubPicker({ value, onChange }: Props) {
   const createHub = useHubsStore((s) => s.createHub);
 
   const [newHubName, setNewHubName] = useState("");
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     fetchHubs();
@@ -36,9 +37,30 @@ export default function HubPicker({ value, onChange }: Props) {
 
   return (
     <>
-      <Text style={mono} className="mb-2 text-xs font-bold uppercase text-amber-400">
-        Station
-      </Text>
+      <View className="mb-2 flex-row items-center gap-2">
+        <Text style={mono} className="text-xs font-bold uppercase text-amber-400">
+          Station
+        </Text>
+        <Pressable
+          onPress={() => setShowInfo((v) => !v)}
+          hitSlop={8}
+          className="h-4 w-4 items-center justify-center rounded-full border border-amber-400/70"
+        >
+          <Text style={mono} className="text-[9px] font-bold text-amber-400">
+            i
+          </Text>
+        </Pressable>
+      </View>
+
+      {showInfo && (
+        <View className="mb-3 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2">
+          <Text style={mono} className="text-[11px] leading-4 text-zinc-300">
+            Places are grouped by their nearest train station on your home
+            screen — like sorting your food map by MRT/LRT line. Optional.
+          </Text>
+        </View>
+      )}
+
       <View className="flex-row flex-wrap gap-2">
         {hubs.map((h) => (
           <Pressable

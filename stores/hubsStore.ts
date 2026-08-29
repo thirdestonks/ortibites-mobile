@@ -7,6 +7,7 @@ interface HubsState {
   loading: boolean
   fetchHubs: () => Promise<void>
   createHub: (name: string) => Promise<{ hub: Hub | null; error: string | null }>
+  renameHub: (id: number, name: string) => Promise<{ error: string | null }>
 }
 
 export const useHubsStore = create<HubsState>((set, get) => ({
@@ -38,5 +39,17 @@ export const useHubsStore = create<HubsState>((set, get) => ({
     const hub = data as Hub
     set((s) => ({ hubs: [...s.hubs, hub] }))
     return { hub, error: null }
+  },
+
+  // Rename only — stations are never deleted so a place's hub_id never orphans.
+  renameHub: async (id, name) => {
+    const trimmed = name.trim()
+    if (!trimmed) return { error: 'Station name is required' }
+    const { error } = await supabase.from('hubs').update({ name: trimmed }).eq('id', id)
+    if (error) return { error: error.message }
+    set((s) => ({
+      hubs: s.hubs.map((h) => (h.id === id ? { ...h, name: trimmed } : h)),
+    }))
+    return { error: null }
   },
 }))

@@ -13,7 +13,7 @@ export const mono = { fontFamily: MONO };
 
 const CARD = "#18181b"; // zinc-900
 
-export function ReceiptEdge({ dir }: { dir: "top" | "bottom" }) {
+export function ReceiptEdge({ dir, color = CARD }: { dir: "top" | "bottom"; color?: string }) {
   const base = {
     width: 0,
     height: 0,
@@ -30,8 +30,8 @@ export function ReceiptEdge({ dir }: { dir: "top" | "bottom" }) {
           key={i}
           style={
             dir === "bottom"
-              ? { ...base, borderTopWidth: 8, borderTopColor: CARD }
-              : { ...base, borderBottomWidth: 8, borderBottomColor: CARD }
+              ? { ...base, borderTopWidth: 8, borderTopColor: color }
+              : { ...base, borderBottomWidth: 8, borderBottomColor: color }
           }
         />
       ))}

@@ -24,8 +24,8 @@ export default function ScreenWrapper({
                         className="flex-1"
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{
-                            // clear the floating BottomNav so bottom CTAs stay tappable
-                            paddingBottom: 150,
+                            // clear the floating FabMenu button so bottom CTAs stay tappable
+                            paddingBottom: 110,
                         }}
                     >
                         <View className="px-5 pt-16">

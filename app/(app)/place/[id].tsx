@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 
 import { useFocusEffect, router, useLocalSearchParams } from "expo-router";
-import { Alert, Linking, Text, View } from "react-native";
+import { Alert, Linking, Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { usePlacesStore } from "../../../stores/placesStore";
 import { useHubsStore } from "../../../stores/hubsStore";
@@ -9,12 +10,10 @@ import { useGuardedPush } from "../../../utils/navigation";
 import { getRatingMeta } from "../../../utils/rating";
 import type { Place } from "../../../types/place";
 
-import PageLoader from "../../../components/PageLoader";
-
 import { showErrorToast, showSuccessToast } from "../../../components/Toast";
 
 import ScreenWrapper from "../../../components/ScreenWrapper";
-import AppButton from "../../../components/AppButton";
+import ReceiptSkeleton, { SkelBar } from "../../../components/ReceiptSkeleton";
 import {
   mono,
   ReceiptEdge,
@@ -36,33 +35,44 @@ export default function PlaceDetailsScreen() {
   const { id } = useLocalSearchParams();
 
   const fetchPlace = usePlacesStore((s) => s.fetchPlace);
+  const getCached = usePlacesStore((s) => s.getCached);
   const deletePlace = usePlacesStore((s) => s.deletePlace);
   const incrementRevisit = usePlacesStore((s) => s.incrementRevisit);
+  const decrementRevisit = usePlacesStore((s) => s.decrementRevisit);
 
   const fetchHubs = useHubsStore((s) => s.fetchHubs);
   const hubs = useHubsStore((s) => s.hubs);
 
   const push = useGuardedPush();
 
-  const [place, setPlace] = useState<Place | null>(null);
-  const [loading, setLoading] = useState(true);
+  // You almost always arrive here from a list that already holds this place, so
+  // paint from memory on the very first render and never show a spinner.
+  const [place, setPlace] = useState<Place | null>(() => getCached(id as string));
+  const [refreshing, setRefreshing] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      loadPlace();
-      loadHubs();
+      let alive = true;
+
+      const load = async () => {
+        setRefreshing(true);
+        const data = await fetchPlace(id as string);
+        if (!alive) return;
+        // A failed refresh keeps the cached copy on screen instead of wiping it.
+        if (data) setPlace(data);
+        else if (!getCached(id as string)) setNotFound(true);
+        setRefreshing(false);
+      };
+
+      load();
+      fetchHubs();
+      return () => {
+        alive = false;
+      };
     }, [id])
   );
-
-  const loadPlace = async () => {
-    const data = await fetchPlace(id as string);
-    setPlace(data);
-    setLoading(false);
-  };
-
-  const loadHubs = async () => {
-    await fetchHubs();
-  };
 
   const handleRevisit = () => {
     if (!place) return;
@@ -72,7 +82,18 @@ export default function PlaceDetailsScreen() {
     );
   };
 
+  const handleUndoRevisit = () => {
+    if (!place) return;
+    const current = place.revisit_count ?? 0;
+    if (current <= 0) return;
+    decrementRevisit(place.id, current);
+    setPlace((prev) =>
+      prev ? { ...prev, revisit_count: Math.max(0, (prev.revisit_count ?? 0) - 1) } : prev
+    );
+  };
+
   const handleDelete = () => {
+    setShowMore(false);
     Alert.alert("Delete Place", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -113,8 +134,13 @@ export default function PlaceDetailsScreen() {
     }
   };
 
-  if (loading) {
-    return <PageLoader />;
+  // Cold open only: nothing cached and the first fetch hasn't landed.
+  if (!place && !notFound) {
+    return (
+      <ScreenWrapper scroll>
+        <ReceiptSkeleton />
+      </ScreenWrapper>
+    );
   }
 
   if (!place) {
@@ -132,14 +158,28 @@ export default function PlaceDetailsScreen() {
   const filled = Math.round(rating);
   const visited = formatVisited(place.visited_at ?? place.created_at);
   const orderNo = `#${String(place.id).padStart(4, "0")}`;
+  const revisits = place.revisit_count ?? 0;
 
-  const hubName =
-    place.hub_id && hubs.length > 0
-      ? hubs.find((h) => h.id === place.hub_id)?.name ?? "UNSORTED"
-      : "UNSORTED";
+  // Hubs load separately, so show a placeholder rather than a wrong "UNSORTED".
+  const hubKnown = !place.hub_id || hubs.length > 0;
+  const hubName = !place.hub_id
+    ? "UNSORTED"
+    : hubs.find((h) => h.id === place.hub_id)?.name ?? "UNSORTED";
 
   return (
     <ScreenWrapper scroll>
+      {refreshing && (
+        <View className="mb-2 flex-row items-center gap-2">
+          <View className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <Text
+            style={mono}
+            className="text-[9px] uppercase tracking-[.2em] text-amber-400/80"
+          >
+            Refreshing
+          </Text>
+        </View>
+      )}
+
       <ReceiptEdge dir="top" />
 
       <View className="bg-zinc-900 px-5 pb-6 pt-3">
@@ -185,41 +225,27 @@ export default function PlaceDetailsScreen() {
           [ {meta.label} ]
         </Text>
 
-        <View className="mt-2">
-          <ReceiptLine label="STATION" value={hubName} />
-        </View>
-
-        <View className="mt-1 flex-row items-center justify-between">
-          <Text style={mono} className="text-xs text-zinc-400">
-            VISITS: {place.revisit_count ?? 0}
-          </Text>
-          <Text
-            style={mono}
-            onPress={handleRevisit}
-            className="rounded-md bg-zinc-800 px-3 py-1 text-xs font-semibold text-amber-400"
-          >
-            REVISIT
-          </Text>
-        </View>
+        {/* Only the genuinely-unresolved field shimmers; the rest is real. */}
+        {hubKnown ? (
+          <View className="mt-2">
+            <ReceiptLine label="STATION" value={hubName} />
+          </View>
+        ) : (
+          <View className="mt-3 flex-row items-center">
+            <Text style={mono} className="text-xs text-zinc-400">
+              STATION
+            </Text>
+            <View className="mx-2 flex-1 border-b border-dashed border-zinc-700" />
+            <SkelBar w={96} h={10} />
+          </View>
+        )}
 
         <DashDivider />
 
         {/* LOCATION */}
-        <View className="flex-row items-center justify-between">
-          <Text style={mono} className="flex-1 text-xs text-zinc-300">
-            📍 {place.address || "No address"}
-          </Text>
-
-          {mapsHref && (
-            <Text
-              style={mono}
-              onPress={openMaps}
-              className="ml-2 rounded-md bg-zinc-800 px-3 py-1 text-xs font-semibold text-white"
-            >
-              MAPS ↗
-            </Text>
-          )}
-        </View>
+        <Text style={mono} className="text-xs text-zinc-300">
+          📍 {place.address || "No address"}
+        </Text>
 
         <DashDivider />
 
@@ -278,20 +304,86 @@ export default function PlaceDetailsScreen() {
         <DashDivider />
 
         <Text style={mono} className="text-center text-xs text-zinc-500">
-          THANK YOU — COME AGAIN
+          THANK YOU, COME AGAIN
         </Text>
       </View>
 
       <ReceiptEdge dir="bottom" />
 
-      {/* ACTIONS */}
-      <View className="mt-5 gap-4">
-        <AppButton title="EDIT PLACE" onPress={() => push(`/edit/${id}`)} />
+      {/* ACTIONS — revisit is what you actually came to do, so it leads.
+          Edit and Delete sit behind the overflow so Delete is never a
+          full-width red target under your thumb. */}
+      <View className="mt-5 flex-row items-center gap-2">
+        <Pressable
+          onPress={handleUndoRevisit}
+          disabled={revisits <= 0}
+          className="h-12 w-11 items-center justify-center rounded-xl border border-zinc-700"
+          style={{ opacity: revisits <= 0 ? 0.35 : 1 }}
+        >
+          <Text style={mono} className="text-sm font-bold text-zinc-300">
+            −
+          </Text>
+        </Pressable>
 
-        <View className="rounded-xl bg-red-500">
-          <AppButton title="DELETE PLACE" onPress={handleDelete} />
-        </View>
+        <Pressable
+          onPress={handleRevisit}
+          className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-amber-400"
+        >
+          <Text style={mono} className="text-sm font-bold text-black">
+            + REVISIT
+          </Text>
+          <Text style={mono} className="text-sm font-bold text-black/45">
+            {revisits}
+          </Text>
+        </Pressable>
+
+        {mapsHref && (
+          <Pressable
+            onPress={openMaps}
+            className="h-12 w-12 items-center justify-center rounded-xl border border-zinc-700"
+          >
+            <Ionicons name="navigate" size={17} color="#d4d4d8" />
+          </Pressable>
+        )}
+
+        <Pressable
+          onPress={() => setShowMore((v) => !v)}
+          className="h-12 w-12 items-center justify-center rounded-xl border border-zinc-700"
+        >
+          <Ionicons
+            name={showMore ? "close" : "ellipsis-horizontal"}
+            size={17}
+            color="#d4d4d8"
+          />
+        </Pressable>
       </View>
+
+      {showMore && (
+        <View className="mt-2 gap-2">
+          <Pressable
+            onPress={() => {
+              setShowMore(false);
+              push(`/edit/${id}`);
+            }}
+            className="h-12 flex-row items-center gap-3 rounded-xl border border-zinc-700 px-4"
+          >
+            <Ionicons name="create-outline" size={17} color="#fbbf24" />
+            <Text style={mono} className="text-xs font-bold uppercase tracking-widest text-zinc-200">
+              Edit place
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleDelete}
+            className="h-12 flex-row items-center gap-3 rounded-xl border border-red-900 bg-red-950/40 px-4"
+          >
+            <Ionicons name="trash-outline" size={17} color="#f87171" />
+            <Text style={mono} className="text-xs font-bold uppercase tracking-widest text-red-400">
+              Delete place
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </ScreenWrapper>
   );
 }

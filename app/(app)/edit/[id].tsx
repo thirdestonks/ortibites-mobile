@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { useEffect, useState } from "react";
 
-import { Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 import { usePlacesStore } from "../../../stores/placesStore";
 
@@ -32,9 +32,12 @@ export default function EditPlaceScreen() {
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [pros, setPros] = useState("");
-  const [cons, setCons] = useState("");
-  const [favoriteDishes, setFavoriteDishes] = useState("");
+  const [pros, setPros] = useState<string[]>([]);
+  const [cons, setCons] = useState<string[]>([]);
+  const [favoriteDishes, setFavoriteDishes] = useState<string[]>([]);
+  const [prosInput, setProsInput] = useState("");
+  const [consInput, setConsInput] = useState("");
+  const [favoriteDishInput, setFavoriteDishInput] = useState("");
   const [hubId, setHubId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,28 @@ export default function EditPlaceScreen() {
   useEffect(() => {
     loadPlace();
   }, []);
+
+  const addItem = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    reset: () => void,
+    current: string[]
+  ) => {
+    const trimmed = value.trim();
+
+    if (!trimmed) return;
+
+    setter([...current, trimmed]);
+    reset();
+  };
+
+  const removeItem = (
+    index: number,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    current: string[]
+  ) => {
+    setter(current.filter((_, i) => i !== index));
+  };
 
   const loadPlace = async () => {
     const place = await fetchPlace(id as string);
@@ -53,9 +78,9 @@ export default function EditPlaceScreen() {
       setLongitude(place.longitude ?? null);
       setRating(Number(place.rating) || 0);
 
-      setPros(place.pros?.join(", ") ?? "");
-      setCons(place.cons?.join(", ") ?? "");
-      setFavoriteDishes(place.favorite_dishes?.join(", ") ?? "");
+      setPros(place.pros ?? []);
+      setCons(place.cons ?? []);
+      setFavoriteDishes(place.favorite_dishes ?? []);
       setHubId(place.hub_id ?? null);
     }
 
@@ -67,18 +92,9 @@ export default function EditPlaceScreen() {
       name,
       address,
       rating,
-      pros: pros
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      cons: cons
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      favorite_dishes: favoriteDishes
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      pros,
+      cons,
+      favorite_dishes: favoriteDishes,
       hub_id: hubId,
       latitude,
       longitude,
@@ -160,17 +176,34 @@ export default function EditPlaceScreen() {
         <Text style={mono} className="mb-2 text-xs font-bold uppercase text-green-400">
           Pros
         </Text>
-        <Text style={mono} className="mb-2 text-[10px] text-zinc-500">
-          comma-separated
-        </Text>
-        <TextInput
-          value={pros}
-          onChangeText={setPros}
-          placeholder="Good food, Cozy, Cheap"
-          placeholderTextColor="#71717a"
-          multiline
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
-        />
+        <View className="flex-row gap-2">
+          <TextInput
+            value={prosInput}
+            onChangeText={setProsInput}
+            placeholder="Fast service, cozy, cheap..."
+            placeholderTextColor="#71717a"
+            className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
+          />
+          <Pressable
+            onPress={() =>
+              addItem(prosInput, setPros, () => setProsInput(""), pros)
+            }
+            className="items-center justify-center rounded-2xl bg-green-500 px-5"
+          >
+            <Text className="text-lg font-black text-black">+</Text>
+          </Pressable>
+        </View>
+        <View className="mt-3 gap-2">
+          {pros.map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={() => removeItem(index, setPros, pros)}
+              className="rounded-2xl border border-green-700 bg-green-950 p-3"
+            >
+              <Text className="font-semibold text-green-300">✓ {item}    ✕</Text>
+            </Pressable>
+          ))}
+        </View>
 
         <DashDivider />
 
@@ -178,17 +211,34 @@ export default function EditPlaceScreen() {
         <Text style={mono} className="mb-2 text-xs font-bold uppercase text-red-400">
           Cons
         </Text>
-        <Text style={mono} className="mb-2 text-[10px] text-zinc-500">
-          comma-separated
-        </Text>
-        <TextInput
-          value={cons}
-          onChangeText={setCons}
-          placeholder="Crowded, Slow service"
-          placeholderTextColor="#71717a"
-          multiline
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
-        />
+        <View className="flex-row gap-2">
+          <TextInput
+            value={consInput}
+            onChangeText={setConsInput}
+            placeholder="Slow service, cramped, pricey..."
+            placeholderTextColor="#71717a"
+            className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
+          />
+          <Pressable
+            onPress={() =>
+              addItem(consInput, setCons, () => setConsInput(""), cons)
+            }
+            className="items-center justify-center rounded-2xl bg-red-500 px-5"
+          >
+            <Text className="text-lg font-black text-black">+</Text>
+          </Pressable>
+        </View>
+        <View className="mt-3 gap-2">
+          {cons.map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={() => removeItem(index, setCons, cons)}
+              className="rounded-2xl border border-red-700 bg-red-950 p-3"
+            >
+              <Text className="font-semibold text-red-300">✕ {item}    ✓</Text>
+            </Pressable>
+          ))}
+        </View>
 
         <DashDivider />
 
@@ -196,17 +246,39 @@ export default function EditPlaceScreen() {
         <Text style={mono} className="mb-2 text-xs font-bold uppercase text-green-400">
           Favorite Dishes
         </Text>
-        <Text style={mono} className="mb-2 text-[10px] text-zinc-500">
-          comma-separated
-        </Text>
-        <TextInput
-          value={favoriteDishes}
-          onChangeText={setFavoriteDishes}
-          placeholder="Beef Curry, Chowfan"
-          placeholderTextColor="#71717a"
-          multiline
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
-        />
+        <View className="flex-row gap-2">
+          <TextInput
+            value={favoriteDishInput}
+            onChangeText={setFavoriteDishInput}
+            placeholder="Chowfan, fries..."
+            placeholderTextColor="#71717a"
+            className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white"
+          />
+          <Pressable
+            onPress={() =>
+              addItem(
+                favoriteDishInput,
+                setFavoriteDishes,
+                () => setFavoriteDishInput(""),
+                favoriteDishes
+              )
+            }
+            className="items-center justify-center rounded-2xl bg-green-500 px-5"
+          >
+            <Text className="text-lg font-black text-black">+</Text>
+          </Pressable>
+        </View>
+        <View className="mt-3 gap-2">
+          {favoriteDishes.map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={() => removeItem(index, setFavoriteDishes, favoriteDishes)}
+              className="rounded-2xl border border-green-700 bg-green-950 p-3"
+            >
+              <Text className="font-semibold text-green-300">🍜 {item}    ✕</Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       <ReceiptEdge dir="bottom" />
