@@ -1,162 +1,178 @@
-import React, { useMemo } from "react";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
+import ScreenWrapper from "../../components/ScreenWrapper";
+import ScreenHeader from "../../components/ScreenHeader";
 import { usePlacesStore } from "../../stores/placesStore";
-import { computeWrappedStats, formatMonthYear } from "../../lib/wrappedStats";
 import {
-  DashDivider,
-  mono,
-  ReceiptEdge,
-  ReceiptHeader,
-  ReceiptLine,
-} from "../../components/receipt";
+  computeWrappedStats,
+  filterPlacesByPeriod,
+  type WrappedPeriod,
+} from "../../lib/wrappedStats";
+import { mono, PeriodToggle } from "../../components/receipt";
+import {
+  CardCaption,
+  CardDivider,
+  CardLabel,
+  CardValue,
+  pickCardArt,
+  WrappedCard,
+} from "../../components/wrappedCards";
+import { DURATION, EASE_OUT } from "../../utils/motion";
+
+/** Filled stars out of five, so the unearned ones stay visible. */
+const stars = (n: number) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
+
+const starStyle = {
+  color: "#fbbf24",
+  letterSpacing: 2,
+  textShadowColor: "rgba(0,0,0,0.9)",
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 4,
+} as const;
 
 export default function WrappedScreen() {
   const router = useRouter();
   const places = usePlacesStore((s) => s.places);
-  const { width } = useWindowDimensions();
+  const [period, setPeriod] = useState<WrappedPeriod>("weekly");
 
-  const stats = useMemo(() => computeWrappedStats(places), [places]);
+  const stats = useMemo(
+    () => computeWrappedStats(filterPlacesByPeriod(places, period)),
+    [places, period]
+  );
+
+  // Drawn once per mount so the three cards don't reshuffle mid-view.
+  const cardArt = useMemo(
+    () => pickCardArt(["spots", "highlights", "rating"]),
+    []
+  );
 
   const closeButton = (
     <Pressable
       onPress={() => router.back()}
-      className="absolute right-5 top-16 z-10 h-10 w-10 items-center justify-center rounded-full bg-black/60"
+      className="h-9 w-9 items-center justify-center rounded-full bg-black/60"
     >
-      <Text className="text-xl text-white">✕</Text>
+      <Text className="text-lg text-white">✕</Text>
     </Pressable>
   );
 
   if (stats.totalSpots === 0) {
     return (
-      <View className="flex-1 items-center justify-center bg-zinc-950 px-8">
-        {closeButton}
-        <Text className="text-7xl">🍜</Text>
-        <Text className="mt-6 text-center text-2xl font-black tracking-widest text-white">
-          NOTHING TO WRAP YET
-        </Text>
-        <Text className="mt-2 text-center text-zinc-400">
-          Log some bites first, then come back for your recap.
-        </Text>
-      </View>
+      <ScreenWrapper dim>
+        <ScreenHeader
+          title="WRAPPED"
+          subtitle="your food story, pinned up"
+          right={closeButton}
+        />
+        <View className="mb-8">
+          <PeriodToggle period={period} onChange={setPeriod} />
+        </View>
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-7xl">🍜</Text>
+          <Text className="mt-6 text-center text-2xl font-black tracking-widest text-white">
+            NOTHING TO WRAP YET
+          </Text>
+          <Text className="mt-2 text-center text-zinc-400">
+            Log some bites this {period === "weekly" ? "week" : "month"} and
+            come back for your recap.
+          </Text>
+        </View>
+      </ScreenWrapper>
     );
   }
 
-  const since = formatMonthYear(stats.earliestDate);
   const avg = stats.averageRating;
 
-  const Card = ({ children }: { children: React.ReactNode }) => (
-    <View style={{ width }} className="flex-1 items-center justify-center px-8">
-      {children}
-    </View>
-  );
-  const Big = ({ children }: { children: React.ReactNode }) => (
-    <Text className="text-center text-6xl font-black text-amber-400">{children}</Text>
-  );
-  const Label = ({ children }: { children: React.ReactNode }) => (
-    <Text className="mt-4 text-center text-lg uppercase tracking-widest text-zinc-300">
-      {children}
-    </Text>
-  );
+  // Three cards, sized to fit one screen without scrolling. Artwork is drawn
+  // fresh per mount via cardArt, so which piece backs each slot varies visit
+  // to visit.
+  const cards = [
+    <WrappedCard key="spots" slot="spots" art={cardArt.spots}>
+      <CardLabel>SPOTS LOGGED</CardLabel>
+      <CardValue tone="accent">{stats.totalSpots.toLocaleString()}</CardValue>
+    </WrappedCard>,
 
-  return (
-    <View className="flex-1 bg-zinc-950">
-      {closeButton}
-      <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-        {/* 1 — Intro */}
-        <Card>
-          <Text className="text-center text-4xl font-black tracking-widest text-white">
-            YOUR{"\n"}ORTIBITES{"\n"}WRAPPED
-          </Text>
-          <Text className="mt-6 text-2xl">✨</Text>
-          <Text className="mt-6 text-center text-zinc-400">
-            swipe to relive your food year →
-          </Text>
-        </Card>
-
-        {/* 2 — Total spots */}
-        <Card>
-          <Big>{stats.totalSpots}</Big>
-          <Label>spots logged</Label>
-          {since ? (
-            <Text className="mt-2 text-center text-zinc-500">since {since}</Text>
-          ) : null}
-        </Card>
-
-        {/* 3 — Top dish */}
-        <Card>
-          <Text className="text-5xl">🍽️</Text>
-          <Text className="mt-4 text-center text-3xl font-black text-amber-400">
-            {stats.topDish ?? "No favorite dish yet"}
-          </Text>
-          {stats.topDish ? <Label>your top dish</Label> : null}
-        </Card>
-
-        {/* 4 — Highest rated */}
-        <Card>
+    // Top Spot and Top Dish share one card, split into two columns so the
+    // paired stats use the safe zone's width rather than its limited height.
+    <WrappedCard key="highlights" slot="highlights" art={cardArt.highlights}>
+      <View className="w-full flex-row items-center">
+        <View className="flex-1 px-1">
+          <CardLabel>TOP SPOT</CardLabel>
           {stats.highestRated ? (
             <>
-              <Text className="text-center text-3xl font-black text-white">
+              <CardValue tone="accent" size="sm">
                 {stats.highestRated.name}
-              </Text>
-              <Text className="mt-3 text-2xl text-amber-400">
-                {"★".repeat(Math.round(stats.highestRated.rating))}
-              </Text>
-              <Label>highest rated</Label>
-            </>
-          ) : (
-            <Text className="text-center text-xl text-zinc-400">No ratings yet</Text>
-          )}
-        </Card>
-
-        {/* 5 — Average rating */}
-        <Card>
-          {avg !== null ? (
-            <>
-              <Big>{avg.toFixed(1)}</Big>
-              <Label>average rating</Label>
-              <Text className="mt-2 text-zinc-500">
-                across {stats.ratedCount} rated spots
+              </CardValue>
+              <Text style={starStyle} className="mt-0.5 text-center text-xs">
+                {stars(Math.round(stats.highestRated.rating))}
               </Text>
             </>
           ) : (
-            <Text className="text-center text-xl text-zinc-400">
-              Rate some spots to see this
-            </Text>
+            <CardValue size="sm">No ratings yet</CardValue>
           )}
-        </Card>
+        </View>
 
-        {/* 6 — Receipt summary */}
-        <Card>
-          <View className="w-full">
-            <ReceiptEdge dir="top" />
-            <View className="bg-zinc-900 px-5 pb-4 pt-3">
-              <ReceiptHeader caption="YOUR WRAPPED" />
-              <DashDivider />
-              <ReceiptLine label="SPOTS" value={String(stats.totalSpots)} />
-              <ReceiptLine label="TOP DISH" value={stats.topDish ?? "—"} />
-              <ReceiptLine label="TOP SPOT" value={stats.highestRated?.name ?? "—"} />
-              <ReceiptLine
-                label="AVG RATING"
-                value={avg !== null ? `${avg.toFixed(1)}/5` : "—"}
-              />
-              <ReceiptLine label="SINCE" value={since ?? "—"} />
-              <DashDivider />
-              <Text style={mono} className="text-center text-xs text-zinc-500">
-                image sharing coming in v2.0.0
-              </Text>
-            </View>
-            <ReceiptEdge dir="bottom" />
-          </View>
-        </Card>
-      </ScrollView>
-    </View>
+        <CardDivider />
+
+        <View className="flex-1 px-1">
+          <CardLabel>TOP DISH</CardLabel>
+          <CardValue size="sm">
+            {stats.topDish ?? "No favorite yet"}
+          </CardValue>
+        </View>
+      </View>
+    </WrappedCard>,
+
+    <WrappedCard key="rating" slot="rating" art={cardArt.rating}>
+      <CardLabel>AVERAGE RATING</CardLabel>
+      <CardValue tone="accent">
+        {avg !== null ? `${avg.toFixed(1)}/5` : "—"}
+      </CardValue>
+      <CardCaption>
+        {avg !== null
+          ? `across ${stats.ratedCount} rated spots`
+          : "rate some spots to see this"}
+      </CardCaption>
+    </WrappedCard>,
+  ];
+
+  return (
+    <ScreenWrapper dim>
+      <ScreenHeader
+        title="WRAPPED"
+        subtitle="your food story, pinned up"
+        right={closeButton}
+      />
+
+      <View className="mb-2">
+        <PeriodToggle period={period} onChange={setPeriod} />
+      </View>
+
+      {/* Three equal rows split whatever height is left. Each card fills its
+          row's height and derives its width from the art's ratio, so the deck
+          scales to the screen instead of scrolling. */}
+      <View className="flex-1 gap-2 pb-1">
+        {cards.map((card, i) => (
+          <Animated.View
+            key={card.key}
+            className="flex-1 items-center justify-center"
+            entering={FadeInDown.delay(i * 110)
+              .duration(DURATION.base)
+              .easing(EASE_OUT)}
+          >
+            {card}
+          </Animated.View>
+        ))}
+      </View>
+
+      <Text
+        style={{ ...mono, color: "#71717a" }}
+        className="pb-2 text-center text-[10px]"
+      >
+        — ORTIBITES · {period.toUpperCase()} REPORT —
+      </Text>
+    </ScreenWrapper>
   );
 }

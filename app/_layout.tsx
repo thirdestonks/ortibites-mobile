@@ -3,6 +3,7 @@ import "../global.css";
 import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { useAuthStore } from "../stores/authStore";
@@ -27,10 +28,12 @@ export default function RootLayout() {
   const showSplash = !minElapsed || loading;
 
   return (
-    <View className="flex-1 bg-zinc-950">
-      <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
-      <Toast />
-      {showSplash ? <AppSplash /> : null}
-    </View>
+    <SafeAreaProvider>
+      <View className="flex-1 bg-zinc-950">
+        <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
+        <Toast />
+        {showSplash ? <AppSplash /> : null}
+      </View>
+    </SafeAreaProvider>
   );
 }

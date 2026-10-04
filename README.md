@@ -1,5 +1,9 @@
 # 🍜 OrtiBites Mobile
 
+<p align="center">
+  <img src="assets/images/readme-banner.png" alt="ortibites — a cozy food journal for Ortigas workers" width="100%">
+</p>
+
 A retro-inspired food memory app for Ortigas workers discovering, rating, and revisiting their favorite food spots.
 
 ---

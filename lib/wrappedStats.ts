@@ -1,5 +1,30 @@
 import type { Place } from "../types/place";
 
+export type WrappedPeriod = "weekly" | "monthly";
+
+/** Filters places to those created within the current week (Mon-Sun) or current calendar month. */
+export function filterPlacesByPeriod(
+  places: Place[],
+  period: WrappedPeriod
+): Place[] {
+  const now = new Date();
+  let start: Date;
+  if (period === "weekly") {
+    const day = now.getDay(); // 0 = Sun
+    const diffToMonday = (day + 6) % 7;
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday);
+  } else {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  start.setHours(0, 0, 0, 0);
+
+  return places.filter((p) => {
+    if (!p.created_at) return false;
+    const created = new Date(p.created_at);
+    return !isNaN(created.getTime()) && created >= start;
+  });
+}
+
 export interface WrappedStats {
   totalSpots: number;
   earliestDate: string | null; // ISO of earliest created_at, or null
