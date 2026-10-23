@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { Text } from "react-native";
-import Animated, {
+import {
   FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import Mascot, { type MascotPose } from "./Mascot";
 import { DURATION, EASE_OUT } from "../utils/motion";

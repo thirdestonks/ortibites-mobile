@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { View, type DimensionValue } from "react-native";
-import Animated, {
+import {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 type DotProps = {
   color: string;

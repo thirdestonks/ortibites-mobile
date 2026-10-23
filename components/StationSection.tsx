@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { FadeInDown } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { Place } from "../types/place";
 import { DURATION, EASE_OUT } from "../utils/motion";

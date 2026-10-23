@@ -16,6 +16,7 @@ export default function AppLayout() {
     <View className="flex-1 bg-zinc-950">
       <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
         <Stack.Screen name="create" options={{ animation: "slide_from_bottom" }} />
+        <Stack.Screen name="pick-location" options={{ animation: "slide_from_bottom" }} />
       </Stack>
       {/* Shown on every screen including Wrapped. The old full-width bar was
           excluded there to protect the story layout; a single corner button

@@ -6,8 +6,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { PRESS_SPRING } from "../utils/motion";
+import { withClassName } from "../utils/animatedInterop";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedPressable = withClassName(Animated.createAnimatedComponent(Pressable));
 
 export default function AppButton({ title, onPress }: any) {
   const scale = useSharedValue(1);

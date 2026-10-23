@@ -1,10 +1,11 @@
 import { Pressable } from "react-native";
-import Animated, {
+import {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
 } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import { PRESS_SPRING } from "../utils/motion";
 

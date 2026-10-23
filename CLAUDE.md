@@ -6,7 +6,7 @@ A retro-diner-inspired food memory app for Ortigas workers to discover, rate, an
 
 ## Golden rule
 
-Expo SDK 54 APIs have changed. Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any Expo code. Do not rely on memory of older SDK APIs.
+Expo SDK 58 APIs have changed. Read the exact versioned docs at https://docs.expo.dev/versions/v58.0.0/ before writing any Expo code. Do not rely on memory of older SDK APIs.
 
 ## Commands
 
@@ -21,8 +21,9 @@ Package manager is **pnpm** (see pnpm-lock.yaml). There is no test or lint scrip
 
 ## Tech stack
 
-- **React Native** 0.81 + **React** 19 on **Expo SDK 54**
-- **Expo Router** v6 — file-based routing (see below)
+- **React Native** 0.88 + **React** 19.3 on **Expo SDK 58** (New Architecture is always on; RN 0.88 uses the Strict TypeScript API, so type refs with `ViewInstance` / `TextInputInstance` / `ScrollViewInstance`)
+- **Expo Router** v58 — file-based routing (see below)
+- Expo Go only supports the newest SDK. If it updates past the project, use a development build instead of chasing Expo Go.
 - **TypeScript** (strict-ish, `~5.9`)
 - **NativeWind v4** + **Tailwind** 3.4 — styling via `className` on RN components
 - **axios** for HTTP, **zustand** for state (available; screens currently fetch locally)
@@ -37,8 +38,9 @@ File-based routing under `app/`, split into `(auth)` and `(app)` groups:
 | `/login` | `app/(auth)/login.tsx` | Sign in / sign up |
 | `/` | `app/(app)/index.tsx` | Home — list of places |
 | `/create` | `app/(app)/create.tsx` | Create a place |
-| `/place/[id]` | `app/(app)/place/[id].tsx` | Place detail + delete + Google Maps link |
+| `/place/[id]` | `app/(app)/place/[id].tsx` | Place detail: map hero with the receipt sheet over it, sticky Revisit bar, "more around here" strip, edit/delete menu, Google Maps link |
 | `/edit/[id]` | `app/(app)/edit/[id].tsx` | Edit a place |
+| `/pick-location` | `app/(app)/pick-location.tsx` | Full-screen map picker (Leaflet in a WebView, dark "Night Service" tiles). Opened from `LocationPicker`; hands its result back through `stores/locationPickerStore.ts`. FabMenu hides itself here. |
 | `/memories` | `app/(app)/memories.tsx` | Entry point into Wrapped |
 | `/roulette` | `app/(app)/roulette.tsx` | Spin-the-wheel picker over saved spots + manual entries |
 | `/wrapped` | `app/(app)/wrapped.tsx` | Spotify Wrapped-style yearly recap |
@@ -83,5 +85,10 @@ interface Place {
 Shipped: Supabase migration (auth, cloud sync, RLS), Roulette, Wrapped, Google Maps deep link.
 
 Not yet built:
-- **v1.2** — Search, place images, PlaceCard polish
-- **v2.0** — "AI Pick For Us", Wrapped image export/sharing, smart recommendations
+- **v1.2** — Offline-first cache (persist places store to AsyncStorage, sync in background), search, PlaceCard polish
+- **v2.0** — Wrapped image export/sharing, smart recommendations
+
+Parked / later (do NOT start unless asked):
+- Place photos (place images)
+- Streaks & badges (May reacts to them)
+- "AI Pick For Us" — far off

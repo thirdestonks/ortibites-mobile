@@ -1,29 +1,58 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { View } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
-import { buildMapHtml } from "./mapPickerHtml";
+import { buildMapHtml, type MapMarker } from "./mapPickerHtml";
 
 interface MapPickerProps {
   latitude: number | null;
   longitude: number | null;
-  onChange: (lat: number, lng: number) => void;
+  /** Called when the user drags the map. Omit for a display-only map. */
+  onChange?: (lat: number, lng: number) => void;
+  /** false = still picture (no pan/zoom) so it can sit inside a scrolling screen. */
+  interactive?: boolean;
+  markers?: MapMarker[];
+  zoom?: number;
 }
 
 const ORTIGAS = { lat: 14.5866, lng: 121.063 };
-const ZOOM = 15;
 const EPSILON = 1e-6;
-const SIZE = 220;
 
-export default function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
-  const webRef = useRef<WebView>(null);
+/** Fills its parent. The pin is fixed at the centre; the map moves under it. */
+export default function MapPicker({
+  latitude,
+  longitude,
+  onChange,
+  interactive = true,
+  markers,
+  zoom = 16,
+}: MapPickerProps) {
+  // react-native-webview 14 defaults its generic to `undefined`, which makes
+  // the props type collapse to `never`; pinning it to `object` fixes the JSX.
+  const webRef = useRef<WebView<object>>(null);
   // Last center the map itself reported — used to avoid a recenter feedback loop.
   const lastReported = useRef<{ lat: number; lng: number } | null>(null);
 
-  const initialLat = latitude ?? ORTIGAS.lat;
-  const initialLng = longitude ?? ORTIGAS.lng;
+  // Frozen at mount. Rebuilding the HTML as the pin moves would reload the
+  // WebView on every pan; later coordinate changes go in through recenter().
+  const start = useRef({
+    lat: latitude ?? ORTIGAS.lat,
+    lng: longitude ?? ORTIGAS.lng,
+  });
 
-  const html = buildMapHtml(initialLat, initialLng, ZOOM);
+  const markersKey = JSON.stringify(markers ?? []);
+  const html = useMemo(
+    () =>
+      buildMapHtml({
+        lat: start.current.lat,
+        lng: start.current.lng,
+        zoom,
+        interactive,
+        markers,
+      }),
+    // markersKey is the value-equal stand-in for the markers array
+    [zoom, interactive, markersKey]
+  );
 
   useEffect(() => {
     if (latitude == null || longitude == null) return;
@@ -46,7 +75,7 @@ export default function MapPicker({ latitude, longitude, onChange }: MapPickerPr
       const { lat, lng } = JSON.parse(e.nativeEvent.data);
       if (typeof lat === "number" && typeof lng === "number") {
         lastReported.current = { lat, lng };
-        onChange(lat, lng);
+        onChange?.(lat, lng);
       }
     } catch {
       // ignore malformed messages
@@ -54,24 +83,17 @@ export default function MapPicker({ latitude, longitude, onChange }: MapPickerPr
   };
 
   return (
-    <View
-      style={{
-        width: SIZE,
-        height: SIZE,
-        borderRadius: SIZE / 2,
-        overflow: "hidden",
-        alignSelf: "center",
-      }}
-      className="border-2 border-amber-500 bg-zinc-950"
-    >
-      <WebView
+    <View className="flex-1 bg-zinc-950">
+      <WebView<object>
         ref={webRef}
-        source={{ html }}
+        // baseUrl makes the WebView send a Referer with every tile request,
+        // which OpenStreetMap's servers require.
+        source={{ html, baseUrl: "https://ortibites.app" }}
         originWhitelist={["*"]}
         onMessage={handleMessage}
         javaScriptEnabled
         scrollEnabled={false}
-        style={{ backgroundColor: "#09090b" }}
+        style={{ backgroundColor: "#17140f" }}
       />
     </View>
   );

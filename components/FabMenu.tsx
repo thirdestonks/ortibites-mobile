@@ -16,9 +16,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../stores/authStore";
 import { useGuardedPush } from "../utils/navigation";
 import { PRESS_SPRING } from "../utils/motion";
+import { withClassName } from "../utils/animatedInterop";
 import { mono } from "./receipt";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedPressable = withClassName(Animated.createAnimatedComponent(Pressable));
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -130,6 +131,10 @@ export default function FabMenu() {
     if (action.key === "logout") signOut();
     else if (action.route) push(action.route);
   };
+
+  // The full-screen map picker owns the whole screen; the button would sit on
+  // top of its confirm sheet.
+  if (pathname === "/pick-location") return null;
 
   return (
     <View className="absolute inset-0" pointerEvents="box-none">

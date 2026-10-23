@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { FadeInDown } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import type { Place } from "../types/place";
 import { getRatingMeta } from "../utils/rating";

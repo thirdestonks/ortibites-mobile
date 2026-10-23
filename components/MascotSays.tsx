@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import { FadeIn } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import Mascot, { type MascotPose } from "./Mascot";
 import { mono } from "./receipt";

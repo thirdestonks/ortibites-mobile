@@ -71,7 +71,7 @@ Instead of trying to become another generic food finder platform, OrtiBites is d
 ## Mobile
 
 * React Native
-* Expo SDK 54
+* Expo SDK 58
 * Expo Router
 * TypeScript
 * NativeWind v4
@@ -93,15 +93,20 @@ Instead of trying to become another generic food finder platform, OrtiBites is d
 
 ## v1.2.0
 
+* Offline-first cache
 * Search functionality
-* Place images
 * Better PlaceCard UI polish
 
 ## v2.0
 
-* AI Pick For Us feature
 * Wrapped image export / sharing
 * Smart recommendations
+
+## 🅿️ Parked / Later
+
+* Place images
+* Streaks & badges
+* AI Pick For Us feature
 
 ---
 

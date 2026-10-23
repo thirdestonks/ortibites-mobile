@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+  type ScrollViewInstance,
+} from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useFocusEffect } from "expo-router";
 
@@ -26,7 +32,7 @@ export default function MetroScreen() {
   const hubs = useHubsStore((s) => s.hubs);
   const fetchHubs = useHubsStore((s) => s.fetchHubs);
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const offsets = useRef<Record<string, number>>({});
   const spineY = useRef(0);
   const [showStationList, setShowStationList] = useState(false);
@@ -89,7 +95,9 @@ export default function MetroScreen() {
                 fetchHubs();
                 fetchPlaces();
               }}
-              tintColor="#fb923c"
+              tintColor="#fbbf24"
+              colors={["#fbbf24"]}
+              progressBackgroundColor="#18181b"
             />
           }
           showsVerticalScrollIndicator={false}

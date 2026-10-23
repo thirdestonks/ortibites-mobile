@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { FadeInDown } from "react-native-reanimated";
+import Animated from "../../utils/animatedInterop";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ScreenHeader from "../../components/ScreenHeader";

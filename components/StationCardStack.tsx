@@ -9,7 +9,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
+import { FadeIn, SlideInDown } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import { useHubsStore } from "../stores/hubsStore";
 import { showErrorToast } from "./Toast";

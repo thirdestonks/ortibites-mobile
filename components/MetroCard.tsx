@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
-import Animated, {
+import {
   interpolate,
   useAnimatedProps,
   useAnimatedStyle,
@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import Animated, { withClassName } from "../utils/animatedInterop";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Place } from "../types/place";
 import { useGuardedPush } from "../utils/navigation";
@@ -19,7 +20,7 @@ import { PRESS_SPRING } from "../utils/motion";
 import { mono, ReceiptEdge } from "./receipt";
 import type { LineColor } from "../utils/lineColors";
 
-const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
+const AnimatedGradient = withClassName(Animated.createAnimatedComponent(LinearGradient));
 
 type Props = {
   place: Place;

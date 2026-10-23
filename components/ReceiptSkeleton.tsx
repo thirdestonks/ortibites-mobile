@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import Animated, {
+import {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 import { DashDivider, ReceiptEdge, ReceiptHeader } from "./receipt";
 

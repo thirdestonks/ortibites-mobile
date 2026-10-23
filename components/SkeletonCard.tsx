@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { View } from "react-native";
-import Animated, {
+import {
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import Animated from "../utils/animatedInterop";
 
 export default function SkeletonCard() {
   const shimmer = useSharedValue(0);
