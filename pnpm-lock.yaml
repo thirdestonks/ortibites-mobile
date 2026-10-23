@@ -93,6 +93,9 @@ importers:
         specifier: ^5.0.13
         version: 5.0.13(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
     devDependencies:
+      '@babel/plugin-transform-react-jsx':
+        specifier: 7.28.6
+        version: 7.28.6(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1)
       '@types/react':
         specifier: ~19.3.0
         version: 19.3.0
