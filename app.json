@@ -33,6 +33,14 @@
       ],
       "expo-font",
       [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Allow Ortibites to save your Wrapped pass to your photos.",
+          "photosPermission": false,
+          "granularPermissions": ["photo"]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",

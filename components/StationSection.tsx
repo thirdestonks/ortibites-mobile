@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { FadeInDown } from "react-native-reanimated";
 import Animated from "../utils/animatedInterop";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -17,12 +17,16 @@ type Props = {
   onUndoRevisit: (id: number, currentCount: number) => void;
   sectionIndex: number;
   lineColor: LineColor;
+  /** Folded stations show only their pin and name. */
+  collapsed?: boolean;
+  onToggle?: () => void;
 };
 
 /**
  * One stop on the line: a pin sitting on the rail, its label, and the cards
  * hanging off to the right. The rail itself is drawn once by SpineRail behind
- * every section, so nothing here draws track.
+ * every section, so nothing here draws track. Tapping the heading folds the
+ * station's cards away.
  */
 export default function StationSection({
   label,
@@ -31,44 +35,55 @@ export default function StationSection({
   onUndoRevisit,
   sectionIndex,
   lineColor,
+  collapsed = false,
+  onToggle,
 }: Props) {
   const isEmpty = places.length === 0;
 
   return (
     <View className="relative w-full">
       {/* Station pin + label. The pin sits ON the rail; the label hangs right. */}
-      <Animated.View
-        entering={FadeInDown.delay(sectionIndex * 150)
-          .duration(DURATION.slow)
-          .easing(EASE_OUT)}
-        className="w-full flex-row items-center py-3"
-        style={{ paddingLeft: GUTTER }}
-      >
-        <View
-          className="absolute items-center justify-center rounded-full"
-          style={{
-            left: RAIL_X - NODE / 2,
-            width: NODE,
-            height: NODE,
-            backgroundColor: lineColor.bg,
-            borderWidth: 3,
-            borderColor: "#09090b", // zinc-950, so the rail reads as passing behind
-          }}
+      <Pressable onPress={onToggle} disabled={isEmpty}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionIndex * 150)
+            .duration(DURATION.slow)
+            .easing(EASE_OUT)}
+          className="w-full flex-row items-center py-3"
+          style={{ paddingLeft: GUTTER }}
         >
-          <MaterialIcons name="train" size={17} color={lineColor.ink} />
-        </View>
-        <Text className="flex-1 text-xl font-extrabold uppercase tracking-widest text-zinc-100">
-          {label}
-        </Text>
-        {!isEmpty && (
-          <Text
-            style={mono}
-            className="text-[10px] font-bold uppercase tracking-widest text-zinc-500"
+          <View
+            className="absolute items-center justify-center rounded-full"
+            style={{
+              left: RAIL_X - NODE / 2,
+              width: NODE,
+              height: NODE,
+              backgroundColor: lineColor.bg,
+              borderWidth: 3,
+              borderColor: "#09090b", // zinc-950, so the rail reads as passing behind
+            }}
           >
-            {places.length}
+            <MaterialIcons name="train" size={17} color={lineColor.ink} />
+          </View>
+          <Text className="flex-1 text-xl font-extrabold uppercase tracking-widest text-zinc-100">
+            {label}
           </Text>
-        )}
-      </Animated.View>
+          {!isEmpty && (
+            <View className="flex-row items-center gap-2">
+              <Text
+                style={mono}
+                className="text-[10px] font-bold uppercase tracking-widest text-zinc-500"
+              >
+                {places.length}
+              </Text>
+              <MaterialIcons
+                name={collapsed ? "chevron-right" : "expand-more"}
+                size={18}
+                color="#52525b"
+              />
+            </View>
+          )}
+        </Animated.View>
+      </Pressable>
 
       {/* Stations with nothing saved collapse to one quiet row instead of a gap */}
       {isEmpty ? (
@@ -80,7 +95,7 @@ export default function StationSection({
             no spot yet
           </Text>
         </View>
-      ) : (
+      ) : collapsed ? null : (
         <View style={{ paddingLeft: GUTTER }} className="pb-2">
           {places.map((place, i) => (
             <Animated.View
@@ -88,7 +103,7 @@ export default function StationSection({
               entering={FadeInDown.delay(sectionIndex * 150 + (i + 1) * 90)
                 .duration(DURATION.slow)
                 .easing(EASE_OUT)}
-              className="pb-3"
+              className="pb-2.5"
             >
               <MetroCard
                 place={place}

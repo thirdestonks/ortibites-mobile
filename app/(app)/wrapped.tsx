@@ -1,12 +1,15 @@
-import React, { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FadeInDown } from "react-native-reanimated";
 import Animated from "../../utils/animatedInterop";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ScreenHeader from "../../components/ScreenHeader";
+import MetroPass from "../../components/MetroPass";
 import { usePlacesStore } from "../../stores/placesStore";
+import { useHubsStore } from "../../stores/hubsStore";
 import {
   computeWrappedStats,
   filterPlacesByPeriod,
@@ -34,15 +37,75 @@ const starStyle = {
   textShadowRadius: 4,
 } as const;
 
+/** NEW = the Metro Pass; OLD = the original art cards, kept for nostalgia. */
+type WrappedLook = "new" | "old";
+const LOOK_KEY = "wrapped.look";
+
+function LookToggle({
+  look,
+  onChange,
+}: {
+  look: WrappedLook;
+  onChange: (look: WrappedLook) => void;
+}) {
+  const Opt = ({ id, label }: { id: WrappedLook; label: string }) => (
+    <Pressable
+      onPress={() => onChange(id)}
+      hitSlop={6}
+      className={`rounded-full px-3 py-1 ${look === id ? "bg-amber-400" : ""}`}
+    >
+      <Text
+        style={mono}
+        className={`text-[10px] font-bold tracking-widest ${
+          look === id ? "text-black" : "text-zinc-400"
+        }`}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+
+  return (
+    <View className="flex-row items-center justify-between">
+      <Text style={mono} className="text-[9px] uppercase tracking-[.22em] text-zinc-500">
+        Style
+      </Text>
+      <View className="flex-row items-center rounded-full border border-zinc-700 bg-zinc-900/80 p-0.5">
+        <Opt id="new" label="NEW" />
+        <Opt id="old" label="OLD" />
+      </View>
+    </View>
+  );
+}
+
 export default function WrappedScreen() {
   const router = useRouter();
   const places = usePlacesStore((s) => s.places);
+  const hubs = useHubsStore((s) => s.hubs);
+  const fetchHubs = useHubsStore((s) => s.fetchHubs);
   const [period, setPeriod] = useState<WrappedPeriod>("weekly");
+  const [look, setLook] = useState<WrappedLook>("new");
 
-  const stats = useMemo(
-    () => computeWrappedStats(filterPlacesByPeriod(places, period)),
+  // Remember the choice between visits.
+  useEffect(() => {
+    AsyncStorage.getItem(LOOK_KEY)
+      .then((v) => {
+        if (v === "new" || v === "old") setLook(v);
+      })
+      .catch(() => {});
+    fetchHubs();
+  }, [fetchHubs]);
+
+  const chooseLook = (next: WrappedLook) => {
+    setLook(next);
+    AsyncStorage.setItem(LOOK_KEY, next).catch(() => {});
+  };
+
+  const periodPlaces = useMemo(
+    () => filterPlacesByPeriod(places, period),
     [places, period]
   );
+  const stats = useMemo(() => computeWrappedStats(periodPlaces), [periodPlaces]);
 
   // Drawn once per mount so the three cards don't reshuffle mid-view.
   const cardArt = useMemo(
@@ -84,11 +147,48 @@ export default function WrappedScreen() {
     );
   }
 
+  // NEW: the Metro Pass, one shareable card. Taller than the screen on small
+  // phones, so it scrolls.
+  if (look === "new") {
+    return (
+      <ScreenWrapper dim>
+        <View className="mb-4 flex-row items-start justify-between">
+          <View>
+            <Text className="text-2xl font-black uppercase tracking-[.14em] text-zinc-100">
+              Wrapped
+            </Text>
+            <Text
+              style={mono}
+              className="mt-1 text-[9px] uppercase tracking-[.2em] text-amber-400/80"
+            >
+              your food story, pinned up
+            </Text>
+          </View>
+          {closeButton}
+        </View>
+
+        <View className="mb-3">
+          <PeriodToggle period={period} onChange={setPeriod} />
+        </View>
+        <View className="mb-1">
+          <LookToggle look={look} onChange={chooseLook} />
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: 10, paddingBottom: 120 }}
+        >
+          <MetroPass period={period} stats={stats} places={periodPlaces} hubs={hubs} />
+        </ScrollView>
+      </ScreenWrapper>
+    );
+  }
+
   const avg = stats.averageRating;
 
-  // Three cards, sized to fit one screen without scrolling. Artwork is drawn
-  // fresh per mount via cardArt, so which piece backs each slot varies visit
-  // to visit.
+  // OLD: three cards, sized to fit one screen without scrolling. Artwork is
+  // drawn fresh per mount via cardArt, so which piece backs each slot varies
+  // visit to visit.
   const cards = [
     <WrappedCard key="spots" slot="spots" art={cardArt.spots}>
       <CardLabel>SPOTS LOGGED</CardLabel>
@@ -149,6 +249,9 @@ export default function WrappedScreen() {
 
       <View className="mb-2">
         <PeriodToggle period={period} onChange={setPeriod} />
+      </View>
+      <View className="mb-1">
+        <LookToggle look={look} onChange={chooseLook} />
       </View>
 
       {/* Three equal rows split whatever height is left. Each card fills its

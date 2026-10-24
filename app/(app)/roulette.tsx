@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { FadeIn } from "react-native-reanimated";
 import Animated from "../../utils/animatedInterop";
 import { useFocusEffect } from "expo-router";
@@ -9,15 +9,15 @@ import ScreenWrapper from "../../components/ScreenWrapper";
 import SpinningWheel, { WheelItem } from "../../components/SpinningWheel";
 import WheelSetupSheet from "../../components/WheelSetupSheet";
 import MascotSays from "../../components/MascotSays";
-import { ReceiptEdge, mono } from "../../components/receipt";
+import { mono } from "../../components/receipt";
 import { usePlacesStore } from "../../stores/placesStore";
 import { useHubsStore } from "../../stores/hubsStore";
 import { useGuardedPush } from "../../utils/navigation";
 import { getLineColor, UNSORTED_LINE_COLOR } from "../../utils/lineColors";
 import type { Place } from "../../types/place";
 
-const WHEEL_FULL = 268;
-const WHEEL_COMPACT = 150;
+const WHEEL_MAX = 360;
+const COMPACT_RATIO = 0.74;
 
 export default function RouletteScreen() {
   const places = usePlacesStore((s) => s.places);
@@ -25,6 +25,10 @@ export default function RouletteScreen() {
   const hubs = useHubsStore((s) => s.hubs);
   const fetchHubs = useHubsStore((s) => s.fetchHubs);
   const push = useGuardedPush();
+  const { width } = useWindowDimensions();
+  // Edge to edge: the wheel is the screen, so it takes nearly the full width.
+  const wheelFull = Math.min(width - 24, WHEEL_MAX);
+  const wheelCompact = Math.round(wheelFull * COMPACT_RATIO);
 
   const [selectedSpotIds, setSelectedSpotIds] = useState<Set<number>>(new Set());
   const [manualItems, setManualItems] = useState<{ id: string; label: string }[]>([]);
@@ -158,11 +162,12 @@ export default function RouletteScreen() {
       </View>
 
       {/* WHEEL — the reason the screen exists, so nothing sits above it */}
-      <View className="mt-6 items-center">
+      <View className="mt-5 items-center">
         <SpinningWheel
           items={items}
-          size={winner ? WHEEL_COMPACT : WHEEL_FULL}
+          size={winner ? wheelCompact : wheelFull}
           compact={!!winner}
+          winnerId={winner?.id ?? null}
           onSpinStart={() => {
             setSpinning(true);
             clearWinner();
@@ -174,87 +179,90 @@ export default function RouletteScreen() {
         />
       </View>
 
-      {/* WINNER — the payoff, printed as a ticket */}
-      {winner && (
-        <Animated.View entering={FadeIn.duration(260)} className="mt-6">
-          <ReceiptEdge dir="top" />
-          <View className="items-center bg-zinc-900 px-5 py-5">
-            <Text
-              style={mono}
-              className="text-[9px] uppercase tracking-[.25em] text-zinc-500"
-            >
-              The wheel has spoken
-            </Text>
-            {/* Winner prints in its own station colour when it's a saved spot */}
-            <Text
-              style={[mono, { color: winnerLine ? winnerLine.bg : "#fbbf24" }]}
-              className="mt-3 text-center text-2xl font-black uppercase tracking-widest"
-            >
-              {winner.label}
-            </Text>
-            {winnerPlace && (
-              <Text style={mono} className="mt-2 text-[10px] uppercase text-zinc-500">
-                {winnerHub} · {"★".repeat(Math.round(winnerPlace.rating ?? 0)) || "unrated"} ·{" "}
-                {winnerPlace.revisit_count ?? 0} visits
-              </Text>
-            )}
-          </View>
-          <ReceiptEdge dir="bottom" />
-        </Animated.View>
-      )}
-
       {/* MAY — same poses as before, now with something to say */}
-      <View className="mt-5">
+      <View className="mt-4">
         <MascotSays pose={mascot.pose} line={mascot.line} size={winner ? 84 : 104} />
       </View>
 
-      {/* ACTIONS */}
-      {winner ? (
-        <View className="mt-6 gap-2">
-          {winner.placeId != null && (
-            <Pressable
-              onPress={() => push(`/place/${winner.placeId}`)}
-              className="h-12 items-center justify-center rounded-xl bg-amber-400"
+      {/* DRAWER — everything that isn't the wheel lives in one sheet below it */}
+      <View className="-mx-5 mt-3 rounded-t-3xl border-t border-zinc-800 bg-zinc-950/95 px-5 pb-6 pt-3">
+        <View className="mb-3 h-1 w-10 self-center rounded-full bg-zinc-700" />
+
+        {winner ? (
+          <Animated.View entering={FadeIn.duration(260)}>
+            {/* The result, printed in its station colour like a boarding pass */}
+            <View
+              className="rounded-2xl px-4 py-3.5"
+              style={{ backgroundColor: winnerLine ? winnerLine.bg : "#fbbf24" }}
             >
               <Text
-                style={mono}
-                className="text-sm font-bold uppercase tracking-widest text-black"
+                style={[mono, { color: winnerLine ? winnerLine.inkMuted : "#451a03" }]}
+                className="text-[8.5px] font-bold uppercase tracking-[.24em]"
               >
-                Take me there
+                Now boarding
               </Text>
-            </Pressable>
-          )}
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={clearWinner}
-              className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-amber-400 bg-amber-400/10"
-            >
-              <Ionicons name="reload" size={15} color="#fbbf24" />
               <Text
-                style={mono}
-                className="text-xs font-bold uppercase tracking-widest text-amber-400"
+                style={[mono, { color: winnerLine ? winnerLine.ink : "#18181b" }]}
+                className="mt-1.5 text-2xl font-black uppercase tracking-wide"
               >
-                Spin again
+                {winner.label}
               </Text>
-            </Pressable>
-            <Pressable
-              onPress={rejectWinner}
-              className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-red-500 bg-red-500/10"
-            >
-              <Ionicons name="close" size={17} color="#f87171" />
               <Text
-                style={mono}
-                className="text-xs font-bold uppercase tracking-widest text-red-400"
+                style={[mono, { color: winnerLine ? winnerLine.inkMuted : "#451a03" }]}
+                className="mt-1.5 text-[10px] uppercase"
               >
-                Not this
+                {winnerPlace
+                  ? `${winnerHub} · ${"★".repeat(Math.round(winnerPlace.rating ?? 0)) || "unrated"} · ${winnerPlace.revisit_count ?? 0} visits`
+                  : "custom option"}
               </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <>
-          {/* ON THE WHEEL — the long checklist, collapsed to chips */}
-          <View className="mt-7">
+            </View>
+
+            <View className="mt-3 gap-2">
+              {winner.placeId != null && (
+                <Pressable
+                  onPress={() => push(`/place/${winner.placeId}`)}
+                  className="h-12 flex-row items-center justify-center gap-2 rounded-xl bg-amber-400"
+                >
+                  <Ionicons name="navigate" size={15} color="#000" />
+                  <Text
+                    style={mono}
+                    className="text-sm font-bold uppercase tracking-widest text-black"
+                  >
+                    Take me there
+                  </Text>
+                </Pressable>
+              )}
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={clearWinner}
+                  className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-amber-400 bg-amber-400/10"
+                >
+                  <Ionicons name="reload" size={15} color="#fbbf24" />
+                  <Text
+                    style={mono}
+                    className="text-xs font-bold uppercase tracking-widest text-amber-400"
+                  >
+                    Spin again
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={rejectWinner}
+                  className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-red-500 bg-red-500/10"
+                >
+                  <Ionicons name="close" size={17} color="#f87171" />
+                  <Text
+                    style={mono}
+                    className="text-xs font-bold uppercase tracking-widest text-red-400"
+                  >
+                    Not this
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </Animated.View>
+        ) : (
+          <>
+            {/* ON THE WHEEL — chips scroll sideways instead of wrapping into a wall */}
             <View className="mb-2.5 flex-row items-center justify-between">
               <Text
                 style={mono}
@@ -277,10 +285,15 @@ export default function RouletteScreen() {
 
             {items.length === 0 ? (
               <Text style={mono} className="text-[11px] text-zinc-600">
-                nothing loaded — use quick fill below
+                nothing loaded, use quick fill below
               </Text>
             ) : (
-              <View className="flex-row flex-wrap gap-2">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="-mx-5"
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+              >
                 {items.map((it) => (
                   <View
                     key={it.id}
@@ -295,19 +308,22 @@ export default function RouletteScreen() {
                     </Text>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
-          </View>
 
-          {/* QUICK FILL — one tap loads the wheel */}
-          <View className="mb-24 mt-6">
+            {/* QUICK FILL — one tap loads the wheel */}
             <Text
               style={mono}
-              className="mb-2.5 text-[9px] uppercase tracking-[.22em] text-zinc-500"
+              className="mb-2.5 mt-5 text-[9px] uppercase tracking-[.22em] text-zinc-500"
             >
               Quick fill
             </Text>
-            <View className="flex-row flex-wrap gap-2">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="-mx-5"
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+            >
               {(
                 [
                   { key: "top", label: "★ 4+ only" },
@@ -326,10 +342,10 @@ export default function RouletteScreen() {
                   </Text>
                 </Pressable>
               ))}
-            </View>
-          </View>
-        </>
-      )}
+            </ScrollView>
+          </>
+        )}
+      </View>
 
       <WheelSetupSheet
         visible={setupOpen}
